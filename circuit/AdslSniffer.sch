@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date 30/12/2012 22:42:32
+EESchema Schematic File Version 2  date 30/12/2012 23:35:29
 LIBS:comm
 LIBS:power
 LIBS:device
@@ -45,6 +45,8 @@ Comment2 ""
 Comment3 ""
 Comment4 ""
 $EndDescr
+Wire Wire Line
+	8750 6150 8700 6150
 Wire Wire Line
 	5900 7350 5450 7350
 Wire Wire Line
@@ -674,6 +676,21 @@ Wire Wire Line
 	8500 1800 8000 1800
 Wire Wire Line
 	6800 7350 6400 7350
+Wire Wire Line
+	9350 6150 9250 6150
+Connection ~ 9350 6150
+Wire Wire Line
+	8700 6150 8700 5700
+Connection ~ 8700 5700
+$Comp
+L R R47
+U 1 1 50E0C179
+P 9000 6150
+F 0 "R47" V 9080 6150 50  0000 C CNN
+F 1 "1000" V 9000 6150 50  0000 C CNN
+	1    9000 6150
+	0    1    1    0   
+$EndComp
 $Comp
 L R R46
 U 1 1 50E0B523
