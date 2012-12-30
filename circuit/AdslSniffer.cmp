@@ -1,4 +1,4 @@
-Cmp-Mod V01 Created by CvPcb (2012-01-19 BZR 3256)-stable date = 30/12/2012 18:07:56
+Cmp-Mod V01 Created by CvPcb (2012-01-19 BZR 3256)-stable date = 30/12/2012 18:38:12
 
 BeginCmp
 TimeStamp = /4EF99D89;
@@ -143,14 +143,14 @@ EndCmp
 BeginCmp
 TimeStamp = /50E069C7;
 Reference = D1;
-ValeurCmp = LED;
+ValeurCmp = LED_PW;
 IdModule  = SM1206POL;
 EndCmp
 
 BeginCmp
 TimeStamp = /50E069BF;
 Reference = D2;
-ValeurCmp = LED;
+ValeurCmp = LED_EN;
 IdModule  = SM1206POL;
 EndCmp
 
@@ -164,7 +164,7 @@ EndCmp
 BeginCmp
 TimeStamp = /4EFC6649;
 Reference = P2;
-ValeurCmp = CONN_4;
+ValeurCmp = CONN_3;
 IdModule  = PIN_ARRAY_3X1;
 EndCmp
 
