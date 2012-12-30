@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date 30/12/2012 17:29:24
+EESchema Schematic File Version 2  date 30/12/2012 17:57:00
 LIBS:comm
 LIBS:power
 LIBS:device
@@ -45,6 +45,26 @@ Comment2 ""
 Comment3 ""
 Comment4 ""
 $EndDescr
+Connection ~ 3650 850 
+Wire Wire Line
+	3650 1050 3650 850 
+Connection ~ 4300 850 
+Wire Wire Line
+	4300 1050 4300 850 
+Connection ~ 4600 1650
+Wire Wire Line
+	4600 1450 4600 1650
+Connection ~ 4000 1650
+Wire Wire Line
+	4000 1450 4000 1650
+Connection ~ 5100 1650
+Wire Wire Line
+	3350 1450 3350 1650
+Wire Wire Line
+	3350 1650 8000 1650
+Connection ~ 5450 850 
+Wire Wire Line
+	5100 850  5100 1050
 Wire Wire Line
 	6250 7150 6250 6900
 Wire Wire Line
@@ -150,8 +170,6 @@ Wire Wire Line
 	9350 6100 9350 6250
 Wire Wire Line
 	9200 5300 8500 5300
-Wire Wire Line
-	8000 850  5450 850 
 Wire Wire Line
 	8800 3100 8800 2800
 Wire Wire Line
@@ -299,7 +317,7 @@ Wire Wire Line
 	1800 4500 1650 4500
 Connection ~ 5700 1650
 Wire Wire Line
-	5450 1450 5450 1650
+	5450 1650 5450 1450
 Connection ~ 6200 1650
 Wire Wire Line
 	5950 1650 5950 1450
@@ -522,8 +540,6 @@ Wire Wire Line
 Wire Wire Line
 	1200 1500 1200 1400
 Wire Wire Line
-	5450 1650 8000 1650
-Wire Wire Line
 	10400 2650 10400 2400
 Wire Wire Line
 	10300 2850 10300 2600
@@ -632,6 +648,80 @@ Wire Wire Line
 Connection ~ 8000 850 
 Wire Wire Line
 	8500 1150 8500 1200
+Wire Wire Line
+	5100 1650 5100 1450
+Connection ~ 5450 1650
+Wire Wire Line
+	3350 1050 3350 850 
+Wire Wire Line
+	3350 850  8000 850 
+Connection ~ 5100 850 
+Wire Wire Line
+	3650 1450 3650 1650
+Connection ~ 3650 1650
+Wire Wire Line
+	4300 1450 4300 1650
+Connection ~ 4300 1650
+Wire Wire Line
+	4600 1050 4600 850 
+Connection ~ 4600 850 
+Wire Wire Line
+	4000 1050 4000 850 
+Connection ~ 4000 850 
+$Comp
+L C C19
+U 1 1 50E071F2
+P 3350 1250
+F 0 "C19" H 3400 1350 50  0000 L CNN
+F 1 "10u" H 3400 1150 50  0000 L CNN
+	1    3350 1250
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C18
+U 1 1 50E071F0
+P 3650 1250
+F 0 "C18" H 3700 1350 50  0000 L CNN
+F 1 "10u" H 3700 1150 50  0000 L CNN
+	1    3650 1250
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C17
+U 1 1 50E071EE
+P 4000 1250
+F 0 "C17" H 4050 1350 50  0000 L CNN
+F 1 "10u" H 4050 1150 50  0000 L CNN
+	1    4000 1250
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C16
+U 1 1 50E071ED
+P 4300 1250
+F 0 "C16" H 4350 1350 50  0000 L CNN
+F 1 "10u" H 4350 1150 50  0000 L CNN
+	1    4300 1250
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C15
+U 1 1 50E071EB
+P 4600 1250
+F 0 "C15" H 4650 1350 50  0000 L CNN
+F 1 "10u" H 4650 1150 50  0000 L CNN
+	1    4600 1250
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C14
+U 1 1 50E071CF
+P 5100 1250
+F 0 "C14" H 5150 1350 50  0000 L CNN
+F 1 "100n" H 5150 1150 50  0000 L CNN
+	1    5100 1250
+	1    0    0    -1  
+$EndComp
 $Comp
 L R R44
 U 1 1 50E069F0
@@ -1428,10 +1518,10 @@ F 1 "100n" H 6250 1150 50  0000 L CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L CAPAPOL C15
+L CAPAPOL C20
 U 1 1 4EF9C0EE
 P 8000 1250
-F 0 "C15" H 8050 1350 50  0000 L CNN
+F 0 "C20" H 8050 1350 50  0000 L CNN
 F 1 "100u" H 8050 1150 50  0000 L CNN
 	1    8000 1250
 	1    0    0    -1  
