@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date 30/12/2012 11:46:44
+EESchema Schematic File Version 2  date 30/12/2012 17:29:24
 LIBS:comm
 LIBS:power
 LIBS:device
@@ -30,6 +30,7 @@ LIBS:opto
 LIBS:atmel
 LIBS:contrib
 LIBS:valves
+LIBS:AdslSniffer-cache
 EELAYER 25  0
 EELAYER END
 $Descr A4 11700 8267
@@ -45,12 +46,30 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 Wire Wire Line
+	6250 7150 6250 6900
+Wire Wire Line
+	6250 7150 5450 7150
+Wire Wire Line
+	5450 7150 5450 7100
+Connection ~ 8000 1650
+Wire Wire Line
+	8000 1450 8000 1750
+Wire Wire Line
+	8000 1750 8500 1750
+Wire Wire Line
+	8500 1750 8500 1700
+Connection ~ 7200 6900
+Wire Wire Line
+	7200 7050 7200 6450
+Wire Wire Line
+	6250 6900 6300 6900
+Wire Wire Line
 	4500 3800 4550 3800
 Wire Wire Line
 	4500 3600 4550 3600
 Connection ~ 2650 4550
 Wire Wire Line
-	2650 6650 5450 6650
+	5450 6650 2650 6650
 Wire Wire Line
 	2650 6650 2650 3150
 Wire Wire Line
@@ -92,7 +111,7 @@ Wire Wire Line
 Wire Wire Line
 	4550 3800 4550 3900
 Wire Wire Line
-	4800 3350 5700 3350
+	5700 3350 4800 3350
 Connection ~ 5300 5000
 Wire Wire Line
 	5300 5000 5300 5100
@@ -126,17 +145,15 @@ Wire Wire Line
 Wire Wire Line
 	7850 4650 8100 4650
 Wire Wire Line
-	7200 6550 7200 6450
-Wire Wire Line
 	7200 6450 7150 6450
 Wire Wire Line
 	9350 6100 9350 6250
 Wire Wire Line
 	9200 5300 8500 5300
 Wire Wire Line
-	5450 850  8000 850 
+	8000 850  5450 850 
 Wire Wire Line
-	8800 2800 8800 3100
+	8800 3100 8800 2800
 Wire Wire Line
 	1600 2450 1600 2850
 Wire Wire Line
@@ -188,9 +205,9 @@ Wire Wire Line
 Wire Wire Line
 	1600 2050 1550 2050
 Wire Wire Line
-	5400 6450 5500 6450
+	5500 6450 5400 6450
 Wire Wire Line
-	8350 6350 7150 6350
+	7150 6350 8350 6350
 Wire Wire Line
 	9350 6600 9350 6450
 Connection ~ 9000 5300
@@ -229,7 +246,7 @@ Wire Wire Line
 Wire Wire Line
 	7800 5900 8600 5900
 Wire Wire Line
-	7300 5500 6300 5500
+	6300 5500 7300 5500
 Wire Wire Line
 	7450 4350 7300 4350
 Wire Wire Line
@@ -294,8 +311,6 @@ Wire Wire Line
 	7050 1650 7050 1450
 Wire Wire Line
 	7650 1650 7650 1450
-Wire Wire Line
-	8000 1450 8000 1650
 Connection ~ 5950 850 
 Wire Wire Line
 	5700 850  5700 1050
@@ -331,9 +346,9 @@ Wire Wire Line
 Wire Wire Line
 	1350 4350 1350 3800
 Wire Wire Line
-	950  5000 950  4850
+	950  4850 950  5000
 Wire Wire Line
-	1350 5000 1350 4850
+	1350 4850 1350 5000
 Connection ~ 1350 4900
 Wire Wire Line
 	1350 4900 1550 4900
@@ -354,8 +369,6 @@ Connection ~ 6200 850
 Wire Wire Line
 	5450 850  5450 1050
 Connection ~ 5700 850 
-Wire Wire Line
-	8000 850  8000 1050
 Connection ~ 7650 850 
 Wire Wire Line
 	7300 1650 7300 1450
@@ -368,7 +381,7 @@ Wire Wire Line
 	5700 1450 5700 1650
 Connection ~ 5950 1650
 Wire Wire Line
-	6200 1450 6200 1700
+	6200 1700 6200 1450
 Wire Wire Line
 	1800 4400 1550 4400
 Wire Wire Line
@@ -429,7 +442,7 @@ Connection ~ 8600 5700
 Wire Wire Line
 	8000 5400 10000 5400
 Wire Wire Line
-	6200 800  6200 1050
+	6200 1050 6200 800 
 Wire Wire Line
 	8950 4900 10200 4900
 Wire Wire Line
@@ -472,8 +485,6 @@ Wire Wire Line
 	1600 2850 1350 2850
 Wire Wire Line
 	1350 2850 1350 3000
-Wire Wire Line
-	5450 6650 5450 6450
 Connection ~ 5450 6450
 Wire Wire Line
 	10700 2750 10300 2750
@@ -511,7 +522,7 @@ Wire Wire Line
 Wire Wire Line
 	1200 1500 1200 1400
 Wire Wire Line
-	8000 1650 5450 1650
+	5450 1650 8000 1650
 Wire Wire Line
 	10400 2650 10400 2400
 Wire Wire Line
@@ -609,6 +620,54 @@ Wire Wire Line
 	3950 3500 3950 3700
 Wire Wire Line
 	5400 3700 4500 3700
+Wire Wire Line
+	5450 6700 5450 6450
+Connection ~ 5450 6650
+Wire Wire Line
+	7200 6900 6800 6900
+Wire Wire Line
+	8500 750  8000 750 
+Wire Wire Line
+	8000 750  8000 1050
+Connection ~ 8000 850 
+Wire Wire Line
+	8500 1150 8500 1200
+$Comp
+L R R44
+U 1 1 50E069F0
+P 6550 6900
+F 0 "R44" V 6630 6900 50  0000 C CNN
+F 1 "47" V 6550 6900 50  0000 C CNN
+	1    6550 6900
+	0    -1   -1   0   
+$EndComp
+$Comp
+L R R45
+U 1 1 50E069E6
+P 8500 1450
+F 0 "R45" V 8580 1450 50  0000 C CNN
+F 1 "47" V 8500 1450 50  0000 C CNN
+	1    8500 1450
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D1
+U 1 1 50E069C7
+P 8500 950
+F 0 "D1" H 8500 1050 50  0000 C CNN
+F 1 "LED" H 8500 850 50  0000 C CNN
+	1    8500 950 
+	0    1    1    0   
+$EndComp
+$Comp
+L LED D2
+U 1 1 50E069BF
+P 5450 6900
+F 0 "D2" H 5450 7000 50  0000 C CNN
+F 1 "LED" V 5450 6800 50  0000 C CNN
+	1    5450 6900
+	0    1    1    0   
+$EndComp
 NoConn ~ 1450 3800
 NoConn ~ 1850 3800
 NoConn ~ 1600 650 
@@ -769,10 +828,10 @@ $EndComp
 $Comp
 L GND #PWR013
 U 1 1 4F10336D
-P 7200 6550
-F 0 "#PWR013" H 7200 6550 30  0001 C CNN
-F 1 "GND" H 7200 6480 30  0001 C CNN
-	1    7200 6550
+P 7200 7050
+F 0 "#PWR013" H 7200 7050 30  0001 C CNN
+F 1 "GND" H 7200 6980 30  0001 C CNN
+	1    7200 7050
 	1    0    0    -1  
 $EndComp
 $Comp
