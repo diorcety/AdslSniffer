@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date 30/12/2012 23:44:57
+EESchema Schematic File Version 2  date 31/12/2012 16:24:08
 LIBS:comm
 LIBS:power
 LIBS:device
@@ -37,7 +37,7 @@ $Descr A4 11700 8267
 encoding utf-8
 Sheet 1 1
 Title ""
-Date "30 dec 2012"
+Date "31 dec 2012"
 Rev ""
 Comp ""
 Comment1 ""
@@ -688,7 +688,7 @@ L R R47
 U 1 1 50E0C179
 P 9000 6150
 F 0 "R47" V 9080 6150 50  0000 C CNN
-F 1 "1000" V 9000 6150 50  0000 C CNN
+F 1 "1k" V 9000 6150 50  0000 C CNN
 	1    9000 6150
 	0    1    1    0   
 $EndComp
