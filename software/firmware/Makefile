@@ -1,0 +1,8 @@
+SOURCES=fw.c device.c utils.c debug.c
+A51_SOURCES=dscr.a51
+BASENAME=firmware
+
+
+all: ihx
+
+include ../../fx2lib/lib/fx2.mk
