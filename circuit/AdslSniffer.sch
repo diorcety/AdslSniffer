@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date 25/01/2013 00:22:06
+EESchema Schematic File Version 2  date 27/01/2013 19:59:55
 LIBS:comm
 LIBS:power
 LIBS:device
@@ -30,13 +30,14 @@ LIBS:opto
 LIBS:atmel
 LIBS:contrib
 LIBS:valves
+LIBS:AdslSniffer-cache
 EELAYER 25  0
 EELAYER END
 $Descr A4 11700 8267
 encoding utf-8
 Sheet 1 1
 Title ""
-Date "24 jan 2013"
+Date "27 jan 2013"
 Rev ""
 Comp ""
 Comment1 ""
@@ -44,6 +45,30 @@ Comment2 ""
 Comment3 ""
 Comment4 ""
 $EndDescr
+Connection ~ 1600 4000
+Wire Wire Line
+	1950 4000 1350 4000
+Wire Wire Line
+	1950 4000 1950 3800
+Wire Wire Line
+	1950 2650 700  2650
+Wire Wire Line
+	1950 2650 1950 3000
+Connection ~ 1600 2650
+Wire Wire Line
+	1150 5600 1150 3850
+Wire Wire Line
+	2750 4300 3700 4300
+Wire Wire Line
+	3700 4300 3700 3900
+Wire Wire Line
+	3700 3900 5700 3900
+Wire Wire Line
+	2750 4400 3750 4400
+Wire Wire Line
+	3750 4400 3750 3950
+Connection ~ 5050 3950
+Connection ~ 4050 3900
 Wire Wire Line
 	1600 1700 1600 2050
 Wire Wire Line
@@ -53,9 +78,7 @@ Wire Wire Line
 Wire Wire Line
 	1600 2450 1600 2600
 Wire Wire Line
-	1350 4350 1350 4000
-Wire Wire Line
-	1350 4000 1600 4000
+	1350 4000 1350 4350
 Wire Wire Line
 	1600 4000 1600 3800
 Wire Wire Line
@@ -64,33 +87,26 @@ Wire Wire Line
 	1100 3800 1100 3850
 Wire Wire Line
 	1200 3000 1200 2950
-Connection ~ 1150 3850
 Wire Wire Line
 	750  2450 700  2450
 Wire Wire Line
 	1200 2950 1100 2950
 Connection ~ 1150 4400
-Connection ~ 4800 3350
 Wire Wire Line
 	4800 4550 4800 3350
-Connection ~ 2900 3800
 Wire Wire Line
-	2500 3800 2900 3800
+	4350 4150 4350 3650
 Wire Wire Line
-	3200 4100 3200 3600
+	4050 4150 4050 3650
+Connection ~ 4200 3150
 Wire Wire Line
-	2900 4100 2900 3600
-Connection ~ 3050 3100
+	4050 3250 4050 3150
 Wire Wire Line
-	2900 3200 2900 3100
+	4050 3150 4350 3150
 Wire Wire Line
-	2900 3100 3200 3100
+	4200 4600 4200 4700
 Wire Wire Line
-	2500 4000 5700 4000
-Wire Wire Line
-	3050 4550 3050 4650
-Wire Wire Line
-	3200 4500 3200 4550
+	4350 4550 4350 4600
 Wire Wire Line
 	8750 6150 8700 6150
 Wire Wire Line
@@ -200,8 +216,6 @@ Connection ~ 10300 2750
 Wire Wire Line
 	10700 2750 10300 2750
 Connection ~ 5450 6450
-Wire Wire Line
-	1600 2450 1550 2450
 Wire Wire Line
 	750  2050 650  2050
 Wire Wire Line
@@ -583,24 +597,14 @@ Wire Wire Line
 Wire Wire Line
 	1150 4400 1800 4400
 Wire Wire Line
-	3200 4550 2900 4550
+	4350 4600 4050 4600
 Wire Wire Line
-	2900 4550 2900 4500
-Connection ~ 3050 4550
+	4050 4600 4050 4550
+Connection ~ 4200 4600
 Wire Wire Line
-	3050 3100 3050 3050
+	4200 3150 4200 3100
 Wire Wire Line
-	3200 3100 3200 3200
-Connection ~ 2900 3900
-Connection ~ 3200 4000
-Wire Wire Line
-	5700 3900 2900 3900
-Wire Wire Line
-	2500 3900 2700 3900
-Wire Wire Line
-	2700 3900 2700 3350
-Wire Wire Line
-	2700 3350 5700 3350
+	4350 3150 4350 3250
 Connection ~ 1150 5600
 Wire Wire Line
 	1100 3850 1200 3850
@@ -608,8 +612,6 @@ Wire Wire Line
 	1100 2950 1100 3000
 Wire Wire Line
 	1200 3850 1200 3800
-Wire Wire Line
-	1150 3850 1150 5600
 Wire Wire Line
 	700  4000 950  4000
 Wire Wire Line
@@ -625,8 +627,6 @@ Wire Wire Line
 Wire Wire Line
 	700  2450 700  2650
 Wire Wire Line
-	700  2650 1600 2650
-Wire Wire Line
 	1600 2650 1600 3000
 Wire Wire Line
 	1600 1500 1600 1600
@@ -638,6 +638,43 @@ Wire Wire Line
 	700  1800 650  1800
 Wire Wire Line
 	650  1800 650  2050
+Wire Wire Line
+	4800 3350 5700 3350
+Connection ~ 4350 4000
+Wire Wire Line
+	5700 4000 3800 4000
+Wire Wire Line
+	3800 4000 3800 4500
+Wire Wire Line
+	3800 4500 2750 4500
+Wire Wire Line
+	3750 3950 4800 3950
+Connection ~ 4800 3950
+Connection ~ 1150 3850
+Wire Wire Line
+	1150 3900 2350 3900
+Wire Wire Line
+	2350 3900 2350 3800
+Connection ~ 1150 3900
+Wire Wire Line
+	2750 3000 2750 2450
+Wire Wire Line
+	2750 2450 1550 2450
+Connection ~ 1600 2450
+Wire Wire Line
+	2750 3800 2750 3950
+Wire Wire Line
+	2750 3950 700  3950
+Connection ~ 700  3950
+$Comp
+L PWB2010L T3
+U 1 1 510576D3
+P 2350 3400
+F 0 "T3" H 2350 3900 70  0000 C CNN
+F 1 "PWB2010L" H 2350 2850 70  0000 C CNN
+	1    2350 3400
+	0    1    1    0   
+$EndComp
 Text Notes 1050 3950 0    60   ~ 0
 16.76Vpp
 $Comp
@@ -654,55 +691,55 @@ R4/(R4+R2)=8.38
 $Comp
 L +3,3V #PWR01
 U 1 1 50E2FD7C
-P 3050 3050
-F 0 "#PWR01" H 3050 3010 30  0001 C CNN
-F 1 "+3,3V" H 3050 3160 30  0000 C CNN
-	1    3050 3050
+P 4200 3100
+F 0 "#PWR01" H 4200 3060 30  0001 C CNN
+F 1 "+3,3V" H 4200 3210 30  0000 C CNN
+	1    4200 3100
 	1    0    0    -1  
 $EndComp
 $Comp
 L GND #PWR02
 U 1 1 50E2FD78
-P 3050 4650
-F 0 "#PWR02" H 3050 4650 30  0001 C CNN
-F 1 "GND" H 3050 4580 30  0001 C CNN
-	1    3050 4650
+P 4200 4700
+F 0 "#PWR02" H 4200 4700 30  0001 C CNN
+F 1 "GND" H 4200 4630 30  0001 C CNN
+	1    4200 4700
 	1    0    0    -1  
 $EndComp
 $Comp
 L ZENER D6
 U 1 1 50E2FD60
-P 3200 4300
-F 0 "D6" H 3200 4400 50  0000 C CNN
-F 1 "3.3V" H 3200 4200 40  0000 C CNN
-	1    3200 4300
+P 4350 4350
+F 0 "D6" H 4350 4450 50  0000 C CNN
+F 1 "3.3V" H 4350 4250 40  0000 C CNN
+	1    4350 4350
 	0    -1   -1   0   
 $EndComp
 $Comp
 L ZENER D5
 U 1 1 50E2FD5F
-P 3200 3400
-F 0 "D5" H 3200 3500 50  0000 C CNN
-F 1 "3.3V" H 3200 3300 40  0000 C CNN
-	1    3200 3400
+P 4350 3450
+F 0 "D5" H 4350 3550 50  0000 C CNN
+F 1 "3.3V" H 4350 3350 40  0000 C CNN
+	1    4350 3450
 	0    -1   -1   0   
 $EndComp
 $Comp
 L ZENER D4
 U 1 1 50E2FD5D
-P 2900 4300
-F 0 "D4" H 2900 4400 50  0000 C CNN
-F 1 "3.3V" H 2900 4200 40  0000 C CNN
-	1    2900 4300
+P 4050 4350
+F 0 "D4" H 4050 4450 50  0000 C CNN
+F 1 "3.3V" H 4050 4250 40  0000 C CNN
+	1    4050 4350
 	0    -1   -1   0   
 $EndComp
 $Comp
 L ZENER D3
 U 1 1 50E2FD5A
-P 2900 3400
-F 0 "D3" H 2900 3500 50  0000 C CNN
-F 1 "3.3V" H 2900 3300 40  0000 C CNN
-	1    2900 3400
+P 4050 3450
+F 0 "D3" H 4050 3550 50  0000 C CNN
+F 1 "3.3V" H 4050 3350 40  0000 C CNN
+	1    4050 3450
 	0    -1   -1   0   
 $EndComp
 Text Notes 5000 3300 0    60   ~ 0
@@ -1076,10 +1113,10 @@ Resistance >15V  <0.1%
 $Comp
 L CONN_3 P3
 U 1 1 4EFC6653
-P 2150 3900
-F 0 "P3" V 2100 3900 50  0000 C CNN
-F 1 "CONN_3" V 2200 3900 50  0000 C CNN
-	1    2150 3900
+P 2400 4400
+F 0 "P3" V 2350 4400 50  0000 C CNN
+F 1 "CONN_3" V 2450 4400 50  0000 C CNN
+	1    2400 4400
 	-1   0    0    -1  
 $EndComp
 $Comp
