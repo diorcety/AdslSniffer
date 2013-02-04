@@ -88,6 +88,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		return TRUE;
 	} else if(cmd == 0x92) {
 		USB_PRINTF(6, "#Start");
+		IOA &= ~(0x1 << 3); // Low 
 		count = 0;
 		bench_start = 1;
 		EP0BCH = 0;
@@ -96,6 +97,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		return TRUE;
 	} else if(cmd == 0x93) {
 		USB_PRINTF(6, "#Stop\n");
+		IOA |= (0x1 << 3); // High
 		bench_start = 0;
 		SYNCDELAY(); FIFORESET = bmNAKALL;
 		SYNCDELAY(); FIFORESET = bmNAKALL | 2;  // reset EP2
@@ -141,6 +143,9 @@ void reset() {
  
 	EP2FIFOCFG &= ~bmBIT0; SYNCDELAY();// not worldwide
 	EP6FIFOCFG &= ~bmBIT0; SYNCDELAY();// not worldwide
+	
+	IOA |= (0x1 << 3); // High at start
+	OEA |= (0x1 << 3); // OEA 3 Output
  
 	usb_debug_disable();
 }

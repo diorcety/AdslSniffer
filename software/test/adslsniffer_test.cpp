@@ -44,7 +44,7 @@ int read_debug(libusb_device_handle *hndl, int wait = 1) {
 	return rv;
 }
 
-#define BENCH_DATA_SIZE (1024*1024*100)
+#define BENCH_DATA_SIZE (1024*1024*1024)
 int nb_transfer = 0;
 #ifdef WIN32
 LARGE_INTEGER bench_base_time;
@@ -185,7 +185,7 @@ int main(int argc, char* argv[]) {
 	
 	
 	int bench_size = BENCH_DATA_SIZE;
-    printf("Start Test\n");
+	printf("Start Test\n");
 	rv = libusb_control_transfer(hndl, 
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
 		0x92,
@@ -238,7 +238,7 @@ int main(int argc, char* argv[]) {
 	
 	bench_stop();
 
-    printf("Start Test\n");
+	printf("Stop Test\n");
 	rv = libusb_control_transfer(hndl, 
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
 		0x93,
