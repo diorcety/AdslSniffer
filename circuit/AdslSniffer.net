@@ -1,4 +1,4 @@
-# EESchema Netlist Version 1.1 created  27/01/2013 20:00:03
+# EESchema Netlist Version 1.1 created  04/02/2013 20:27:32
 (
  ( /4EF99D89 SM0402 C1 100n
   ( 1 N-000090 )
@@ -68,7 +68,7 @@
   ( 1 +3.3V )
   ( 2 GND )
  )
- ( /4EF9C0EE SM1210 C20 100u
+ ( /4EF9C0EE ESMT18 C20 100u
   ( 1 +3.3V )
   ( 2 GND )
  )
