@@ -1,3 +1,22 @@
+/* 
+AdslSniffer
+Copyright (C) 2013  Yann Diorcet <diorcet.yann@gmail.com>
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
 #include "USB.h"
 #include <iostream>
 class USBDevice;
@@ -48,7 +67,7 @@ USBBuffer::~USBBuffer() {
 	delete[] mBuffer;
 }
 
-USBRequest::USBRequest(size_t packet_count, size_t buffer_size) {
+USBRequest::USBRequest(size_t packet_count, size_t buffer_size): mDone(true) {
 	for(size_t i = 0; i < packet_count; ++i) {
 		idle_buffers.push_back(new USBBuffer(buffer_size));
 	}
@@ -56,76 +75,66 @@ USBRequest::USBRequest(size_t packet_count, size_t buffer_size) {
 
 void USBRequest::receive(USBBuffer *buffer) {
 	std::unique_lock<std::mutex> lock(mMutex);
-	bytes += buffer->getLength();
+	mBytes += buffer->getLength();
 	if(buffer->getStatus() == LIBUSB_TRANSFER_COMPLETED) {
-		//std::cout << "Receive " << buffer->getActualLength() << std::endl;
-		bytes -= buffer->getActualLength();
-		/*int tt = buffer->getActualLength();
-		unsigned char * bb = buffer->getBuffer();
-		std::cout << *((unsigned short*)bb) << " " << (int)bb[tt-3] << 
-		" " << *((unsigned short*)(bb + tt - 2)) << std::endl; */
+		mBytes -= buffer->getActualLength();
 	} else {
 		std::cout << "Error " << buffer->getStatus() << " with buffer 0x" << buffer << std::endl;
 	}
 	processing_buffers.remove(buffer);
 	idle_buffers.push_back(buffer);
 	addBuffers();
-	//mCond.notify_all();
 }
 
 void USBRequest::addBuffers() {
-	while(!idle_buffers.empty() && err == 0 && bytes > 0) {
+	while(!idle_buffers.empty() && mErr == 0 && mBytes > 0) {
 		USBBuffer *buffer = idle_buffers.front();
 		idle_buffers.pop_front();
 
-		size_t size = bytes;
+		size_t size = mBytes;
 		if(size > buffer->getBufferSize())
 			size = buffer->getBufferSize();
-		bytes -= size;
-		//std::cout << "Send " << size << " remaining " << bytes << std::endl;
-		int ret = buffer->send(mDevice, std::bind(&USBRequest::receive, this, std::placeholders::_1), ep, size, 3000);
+		mBytes -= size;
+		int ret = buffer->send(mDevice, std::bind(&USBRequest::receive, this, std::placeholders::_1), mEp, size, 3000);
 		if(ret == 0) {
-			//std::cout << "Ok" << std::endl; 
 			processing_buffers.push_back(buffer);
 		} else {
 			std::cout << "Can't send: " << buffer->getStatus() << " with buffer 0x" << buffer << std::endl;
-			err = ret;
+			mErr = ret;
 		}
 	}
-	if(bytes == 0 || err == 0) {
+	if(mBytes == 0 || mErr == 0) {
 		if(processing_buffers.empty()) {
-			done = 1;
+			mDone = true;
+			request_end();
 		}
 	}
 }
 
-int USBRequest::request(libusb_context* ctx, USBDevice *device, unsigned char endpoint, size_t request_bytes) {
-	std::cout << "Request start" << std::endl;
-	bytes = request_bytes;
-	mDevice = device;
-	err = 0;
-	done = 0;
-	ep = endpoint;
-	addBuffers();
-	while(!done) {
-		libusb_handle_events_completed(ctx, &done);
+void USBRequest::request_end() {
+	std::cout << "Request end: (remaining " << mBytes << " bytes)"<< std::endl;
+	if(mErr != 0) {
+		std::cout << "Request error: " << mErr  << std::endl;
 	}
-	std::cout << "Remaining: " << bytes << std::endl;
-	if(err != 0) {
-		std::cout << "Erreur" << std::endl;
+	if(mCallback) {
+		mCallback(mErr);
 	}
-	return err;
+	mCond.notify_all();
 }
 
-void USBRequest::waitAll() {
-	std::cout << "Wait all" << std::endl;
-	std::unique_lock<std::mutex> lock(mMutex);
-	while(!processing_buffers.empty()) {
-		mCond.wait(lock);
-	}
+int USBRequest::request(USBDevice &device, unsigned char endpoint, size_t request_bytes, std::function<void (int)> callback) {
+	std::cout << "Request start: (" << request_bytes << " bytes)" <<std::endl;
+	mBytes = request_bytes;
+	mDevice = &device;
+	mErr = 0;
+	mDone = false;
+	mEp = endpoint;
+	mCallback = callback;
+	addBuffers();
 }
 
 USBRequest::~USBRequest() {
+	wait<>();
 	while(!idle_buffers.empty()) {
 		delete idle_buffers.back();
 		idle_buffers.pop_back();
@@ -139,3 +148,39 @@ libusb_device_handle* USBDevice::getDeviceHandle() const {
 	return mDeviceHandle;
 }
 
+USBContext::USBContext(libusb_context *context): mContext(context), mStarted(false) {
+}
+
+USBContext::~USBContext() {
+	stop();
+	wait();
+}
+
+libusb_context* USBContext::getContext() const {
+	return mContext;
+}
+
+void USBContext::start() {
+	{
+		std::lock_guard<std::mutex> lock(mMutex);
+		mCompleted = 0;
+		mStarted = true;
+	}
+	while(!mCompleted) {
+		struct timeval tv;
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+		libusb_handle_events_timeout_completed(mContext, &tv, &mCompleted);
+	}
+	
+	{
+		std::lock_guard<std::mutex> lock(mMutex);
+		mStarted = false;
+	}
+	mCond.notify_all();
+}
+
+void USBContext::stop() {
+	std::lock_guard<std::mutex> lock(mMutex);
+	mCompleted = 1;
+}

@@ -78,7 +78,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		short val = SETUP_VALUE();
 		if(val != 0) {
 		 usb_debug_enable();
-		 USB_PRINTF(6, "#Debug enabled\n");
+		 USB_PRINTF(6, "Debug enabled");
 		} else {
 		 usb_debug_disable();
 		}
@@ -87,7 +87,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		EP0CS |= bmHSNAK;
 		return TRUE;
 	} else if(cmd == 0x92) {
-		USB_PRINTF(6, "#Start");
+		USB_PRINTF(6, "Start");
 		IOA &= ~(0x1 << 3); // Low 
 		count = 0;
 		bench_start = 1;
@@ -96,7 +96,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		EP0CS |= bmHSNAK;
 		return TRUE;
 	} else if(cmd == 0x93) {
-		USB_PRINTF(6, "#Stop\n");
+		USB_PRINTF(6, "Stop");
 		IOA |= (0x1 << 3); // High
 		bench_start = 0;
 		SYNCDELAY(); FIFORESET = bmNAKALL;
@@ -111,7 +111,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		if(!enabled) {
 			usb_debug_enable();
 		}
-		USB_PRINTF(6, "#TOTO %x %x\n", EP2CS, EP2CFG);
+		USB_PRINTF(6, "TOTO %x %x", EP2CS, EP2CFG);
 		if(!enabled) {
 			usb_debug_disable();
 		}
@@ -123,7 +123,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		EP0BCH = 0;
 		EP0BCL = 0;
 		EP0CS |= bmHSNAK;
-		USB_PRINTF(6, "#Test\n");
+		USB_PRINTF(6, "Test");
 		return TRUE;
 	}
 	return FALSE;
