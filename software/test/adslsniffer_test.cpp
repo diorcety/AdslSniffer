@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <cstdio>
 #include <iostream>
 #include <cassert>
-#include <thread>
 #ifdef WIN32
 #include <windows.h>
 void usleep(int s) {
@@ -183,19 +182,19 @@ int main(int argc, char* argv[]) {
 	read_debug(hndl, 0);
 	
 	USBContext context(ctx);
-	std::thread t1(&USBContext::start, &context);
 	USBDevice device(hndl);
 	USBRequest request(8, 2048);
 	
+	context.start<>();
+	
 	// Send request
 	bench_start();
-	request.request(device, 0x82, BENCH_DATA_SIZE);
+	request.send(device, 0x82, BENCH_DATA_SIZE);
 	request.wait<>();
 	bench_stop();
 
 	context.stop();
 	context.wait<>();
-	t1.join();
 	
 	printf("Stop Test\n");
 	rv = libusb_control_transfer(hndl, 

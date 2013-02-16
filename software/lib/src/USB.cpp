@@ -19,14 +19,49 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "USB.h"
 #include <iostream>
-class USBDevice;
+
+USBAsync::USBAsync() : mStarted(false) {
+}
+
+USBAsync::~USBAsync() {
+	wait<>();
+}
+
+void USBAsync::terminate() {
+	std::unique_lock<std::recursive_mutex> lock(*this);
+	mStarted = false;
+	mCond.notify_all();
+}
+
+bool USBAsync::isCompleted() {
+	std::unique_lock<std::recursive_mutex> lock(*this);
+	return mCompleted;
+}
+
+bool USBAsync::isRunning() {
+	std::unique_lock<std::recursive_mutex> lock(*this);
+	return mStarted;
+}
+
+bool USBAsync::start() {
+	std::unique_lock<std::recursive_mutex> lock(*this);
+	mCompleted = false;
+	mStarted = true;
+}
+
+bool USBAsync::stop() {
+	std::unique_lock<std::recursive_mutex> lock(*this);
+	mCompleted = true;
+}
 
 void USBBuffer::transfer_callback(struct libusb_transfer *transfer) {
-	mCallBack(this);
+	if(mCallBack) {
+		mCallBack(this->shared_from_this());
+	}
 }
 
 void USBBuffer::__transfer_callback(struct libusb_transfer *transfer) {
-	USBBuffer *buffer = (USBBuffer *) transfer->user_data;
+	std::shared_ptr<USBBuffer> buffer = reinterpret_cast<USBBuffer *>(transfer->user_data)->shared_from_this();
 	buffer->transfer_callback(transfer);
 }
 
@@ -35,9 +70,9 @@ USBBuffer::USBBuffer(size_t size): mBufferSize(size) {
 	mBuffer = new unsigned char[mBufferSize];
 }
 
-int USBBuffer::send(USBDevice *device, std::function<void(USBBuffer*)> cb, unsigned char endpoint, size_t len, unsigned int timeout) {
+int USBBuffer::send(USBDevice &device, std::function<void(const std::shared_ptr<USBBuffer>&)> cb, unsigned char endpoint, size_t len, unsigned int timeout) {
 	mCallBack = cb;
-	libusb_fill_bulk_transfer(mTransfer, device->getDeviceHandle(),
+	libusb_fill_bulk_transfer(mTransfer, device.getDeviceHandle(),
 		endpoint, mBuffer, len, (libusb_transfer_cb_fn)__transfer_callback, this, timeout);
 	return libusb_submit_transfer(mTransfer);
 }
@@ -67,14 +102,17 @@ USBBuffer::~USBBuffer() {
 	delete[] mBuffer;
 }
 
-USBRequest::USBRequest(size_t packet_count, size_t buffer_size): mDone(true) {
+bool USBRequest::start() {
+};
+
+USBRequest::USBRequest(size_t packet_count, size_t buffer_size) {
 	for(size_t i = 0; i < packet_count; ++i) {
-		idle_buffers.push_back(new USBBuffer(buffer_size));
+		idle_buffers.push_back(std::make_shared<USBBuffer>(buffer_size));
 	}
 }
 
-void USBRequest::receive(USBBuffer *buffer) {
-	std::unique_lock<std::mutex> lock(mMutex);
+void USBRequest::receive(const std::shared_ptr<USBBuffer> &buffer) {
+	std::unique_lock<std::recursive_mutex> lock(*this);
 	mBytes += buffer->getLength();
 	if(buffer->getStatus() == LIBUSB_TRANSFER_COMPLETED) {
 		mBytes -= buffer->getActualLength();
@@ -83,60 +121,56 @@ void USBRequest::receive(USBBuffer *buffer) {
 	}
 	processing_buffers.remove(buffer);
 	idle_buffers.push_back(buffer);
-	addBuffers();
+	handleBuffers();
 }
 
-void USBRequest::addBuffers() {
-	while(!idle_buffers.empty() && mErr == 0 && mBytes > 0) {
-		USBBuffer *buffer = idle_buffers.front();
+void USBRequest::handleBuffers() {
+	while(!idle_buffers.empty() && mError == 0 && mBytes > 0) {
+		std::shared_ptr<USBBuffer> buffer = idle_buffers.front();
 		idle_buffers.pop_front();
 
 		size_t size = mBytes;
 		if(size > buffer->getBufferSize())
 			size = buffer->getBufferSize();
 		mBytes -= size;
-		int ret = buffer->send(mDevice, std::bind(&USBRequest::receive, this, std::placeholders::_1), mEp, size, 3000);
+		int ret = buffer->send(*mDevice, std::bind(&USBRequest::receive, this, std::placeholders::_1), mEndpoint, size, 3000);
 		if(ret == 0) {
 			processing_buffers.push_back(buffer);
 		} else {
 			std::cout << "Can't send: " << buffer->getStatus() << " with buffer 0x" << buffer << std::endl;
-			mErr = ret;
+			mError = ret;
 		}
 	}
-	if(mBytes == 0 || mErr == 0) {
+	if(mBytes == 0 || mError == 0) {
 		if(processing_buffers.empty()) {
-			mDone = true;
-			request_end();
+			std::cout << "Request end: (remaining " << mBytes << " bytes)"<< std::endl;
+			if(mError != 0) {
+				std::cout << "Request error: " << mError << std::endl;
+			}
+			if(mCallback) {
+				mCallback(mError);
+			}
+			terminate();
 		}
 	}
 }
 
-void USBRequest::request_end() {
-	std::cout << "Request end: (remaining " << mBytes << " bytes)"<< std::endl;
-	if(mErr != 0) {
-		std::cout << "Request error: " << mErr  << std::endl;
+int USBRequest::send(USBDevice &device, unsigned char endpoint, size_t request_bytes, std::function<void (int)> callback) {
+	std::unique_lock<std::recursive_mutex> lock(*this);
+	if(USBAsync::start()) {
+		std::cout << "Request start: (" << request_bytes << " bytes)" <<std::endl;
+		mBytes = request_bytes;
+		mDevice = &device;
+		mError = 0;
+		mEndpoint = endpoint;
+		mCallback = callback;
+		handleBuffers();
 	}
-	if(mCallback) {
-		mCallback(mErr);
-	}
-	mCond.notify_all();
-}
-
-int USBRequest::request(USBDevice &device, unsigned char endpoint, size_t request_bytes, std::function<void (int)> callback) {
-	std::cout << "Request start: (" << request_bytes << " bytes)" <<std::endl;
-	mBytes = request_bytes;
-	mDevice = &device;
-	mErr = 0;
-	mDone = false;
-	mEp = endpoint;
-	mCallback = callback;
-	addBuffers();
 }
 
 USBRequest::~USBRequest() {
 	wait<>();
 	while(!idle_buffers.empty()) {
-		delete idle_buffers.back();
 		idle_buffers.pop_back();
 	}
 }
@@ -148,39 +182,23 @@ libusb_device_handle* USBDevice::getDeviceHandle() const {
 	return mDeviceHandle;
 }
 
-USBContext::USBContext(libusb_context *context): mContext(context), mStarted(false) {
+USBContext::USBContext(libusb_context *context): mContext(context) {
 }
 
 USBContext::~USBContext() {
-	stop();
-	wait();
+	wait<>();
 }
 
 libusb_context* USBContext::getContext() const {
 	return mContext;
 }
 
-void USBContext::start() {
-	{
-		std::lock_guard<std::mutex> lock(mMutex);
-		mCompleted = 0;
-		mStarted = true;
-	}
-	while(!mCompleted) {
-		struct timeval tv;
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
-		libusb_handle_events_timeout_completed(mContext, &tv, &mCompleted);
-	}
-	
-	{
-		std::lock_guard<std::mutex> lock(mMutex);
-		mStarted = false;
-	}
-	mCond.notify_all();
-}
+bool USBContext::start() {
+};
 
-void USBContext::stop() {
-	std::lock_guard<std::mutex> lock(mMutex);
-	mCompleted = 1;
+void USBContext::run() {
+	while(!isCompleted()) {
+		libusb_handle_events_timeout (mContext, &mTv);
+	}
+	terminate();
 }

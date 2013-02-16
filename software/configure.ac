@@ -14,7 +14,7 @@ AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11
 
 # Checks for libraries.
-PKG_CHECK_MODULES([LIBUSB], [libusb-1.0])
+PKG_CHECK_MODULES([libusb], [libusb-1.0])
 
 
 # Checks for header files.
