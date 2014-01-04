@@ -1,4 +1,4 @@
-PCBNEW-BOARD Version 2 date 04/01/2014 17:26:58
+PCBNEW-BOARD Version 2 date 04/01/2014 17:34:49
 
 # Created by Pcbnew(2013-07-07 BZR 4022)-stable
 
@@ -10,7 +10,7 @@ EnabledLayers 1FFF8001
 Links 193
 NoConn 0
 Di 98.996499 93.789499 189.738001 132.6642
-Ndraw 33
+Ndraw 35
 Ntrack 637
 Nzone 0
 BoardThickness 1.6002
@@ -34,7 +34,7 @@ $SETUP
 Layers 2
 Layer[0] Dessous signal
 Layer[15] Dessus signal
-TrackWidth 0.4064
+TrackWidth 0.2032
 TrackWidthList 0.4064
 TrackWidthList 0.6096
 TrackWidthList 0.8128
@@ -4959,6 +4959,16 @@ Of 0 0 0
 Ro 0 0 0
 $EndSHAPE3D
 $EndMODULE Sit7x5
+$TEXTPCB
+Te "EN"
+Po 151.384 113.157 1 1 0.25 0
+De 20 0 0 Normal
+$EndTEXTPCB
+$TEXTPCB
+Te "ON"
+Po 148.844 113.157 1 1 0.25 0
+De 20 0 0 Normal
+$EndTEXTPCB
 $COTATION
 Ge 0 25 0
 Va 43.561
