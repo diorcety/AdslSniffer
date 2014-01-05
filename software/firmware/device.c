@@ -99,9 +99,9 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		USB_PRINTF(6, "Stop");
 		IOA |= (0x1 << 3); // High
 		bench_start = 0;
-		SYNCDELAY(); FIFORESET = bmNAKALL;
-		SYNCDELAY(); FIFORESET = bmNAKALL | 2;  // reset EP2
-		SYNCDELAY(); FIFORESET = 0x00;
+		FIFORESET = bmNAKALL; SYNCDELAY();
+		FIFORESET = bmNAKALL | 2; SYNCDELAY();  // reset EP2
+		FIFORESET = 0x00; SYNCDELAY();
 		EP0BCH = 0;
 		EP0BCL = 0;
 		EP0CS |= bmHSNAK;
@@ -111,7 +111,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		if(!enabled) {
 			usb_debug_enable();
 		}
-		USB_PRINTF(6, "TOTO %x %x", EP2CS, EP2CFG);
+		USB_PRINTF(6, "AdslSniffer V0.0.1");
 		if(!enabled) {
 			usb_debug_disable();
 		}
@@ -138,7 +138,7 @@ void reset() {
 	// Reset all the FIFOs
 	FIFORESET = bmNAKALL; SYNCDELAY(); 
 	FIFORESET = 2; SYNCDELAY();   // reset EP2
-	FIFORESET = 6; SYNCDELAY();   // reset EP8
+	FIFORESET = 6; SYNCDELAY();   // reset EP6
 	FIFORESET = 0x00; SYNCDELAY(); 
  
 	EP2FIFOCFG &= ~bmBIT0; SYNCDELAY();// not worldwide

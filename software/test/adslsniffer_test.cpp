@@ -92,8 +92,10 @@ void bench_stats() {
 	time += (bench_stop_time.tv_sec - bench_start_time.tv_sec) * 1000;
 #endif
 	rate = (float) BENCH_DATA_SIZE / time;
+	printf("--------------------------------------------\n");
 	printf("Stats %d bytes in %f ms : %f kbytes/s\n", BENCH_DATA_SIZE, time, rate);
 	printf("Nb transfer %d\n", nb_transfer);
+	printf("--------------------------------------------\n");
 }
 
 int main(int argc, char* argv[]) {
@@ -119,7 +121,7 @@ int main(int argc, char* argv[]) {
 
 	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
  
- 	printf("TOTO\n"); 
+ 	printf("AdslSniffer Test\n"); 
 	rv = libusb_control_transfer(hndl, 
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
 		0x94,
@@ -129,8 +131,8 @@ int main(int argc, char* argv[]) {
 		0,
 		0);
 	if(rv != 0) {
-	printf ( "CONTROL Transfer failed: %s(%d)\n", libusb_error_name(rv), rv);
-	return rv;
+		printf ( "CONTROL Transfer failed: %s(%d)\n", libusb_error_name(rv), rv);
+		return rv;
 	}
 	read_debug(hndl, 0);
  
@@ -144,8 +146,8 @@ int main(int argc, char* argv[]) {
 		0,
 		0);
 	if(rv != 0) {
-	printf ( "CONTROL Transfer failed: %s(%d)\n", libusb_error_name(rv), rv);
-	return rv;
+		printf ( "CONTROL Transfer failed: %s(%d)\n", libusb_error_name(rv), rv);
+		return rv;
 	}
 	
 	printf("Enable debug\n");
@@ -206,6 +208,7 @@ int main(int argc, char* argv[]) {
 	// Send request
 	bench_start();
 	request.send(device, 0x82, BENCH_DATA_SIZE);
+	bench_inc();
 	request.wait<>();
 	bench_stop();
 
@@ -222,19 +225,36 @@ int main(int argc, char* argv[]) {
 		0,
 		0);
 	if(rv != 0) {
-	printf ( "CONTROL(Start) Transfer failed: %s(%d)\n", libusb_error_name(rv), rv);
-	return rv;
+		printf ( "CONTROL(Stop) Transfer failed: %s(%d)\n", libusb_error_name(rv), rv);
+		return rv;
 	}
+	read_debug(hndl, 0);
+	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
+	
+	printf("Print test\n");
+	rv = libusb_control_transfer(hndl, 
+		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
+		0x99,
+		0x00,
+		0x22,
+		0,
+		0,
+		0);
+	if(rv != 0) {
+		printf ( "CONTROL(Debug) Transfer failed: %s(%d)\n", libusb_error_name(rv), rv);
+		return rv;
+	}
+	read_debug(hndl, 0);
+	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
 
-	printf("Test end\n");
-	bench_stats();
-
-
-
+	// Empty debug
 	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
 
 	libusb_release_interface(hndl, 0);
 	libusb_close(hndl);
+	
+	printf("Test end\n");
+	bench_stats();
 
 	return 0;
 }
