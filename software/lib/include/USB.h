@@ -112,7 +112,7 @@ private:
 	
 public:
 	USBRequest(size_t packet_count, size_t buffer_size);
-	int send(USBDevice &device, unsigned char endpoint, size_t bytes, std::function<void (int)> callback=std::function<void (int)>());
+	bool send(USBDevice &device, unsigned char endpoint, size_t bytes, std::function<void (int)> callback=std::function<void (int)>());
 	
 	~USBRequest();
 };

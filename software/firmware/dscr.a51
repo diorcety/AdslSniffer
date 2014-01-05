@@ -166,7 +166,7 @@ fullspd_dscr_end:
 	.db	0x88				; ep8 dir=in and address
 	.db	ENDPOINT_TYPE_BULK	; type
 	.db	0x40				; max packet LSB
-	.db	0x00				; max packet size== bytes
+	.db	0x00				; max packet size=64 bytes
 	.db	0x00				; polling interval
 	
 fullspd_dscr_realend:

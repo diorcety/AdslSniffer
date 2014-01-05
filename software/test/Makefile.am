@@ -2,7 +2,8 @@ bin_PROGRAMS = adslsniffer_test
 
 adslsniffer_test_CPPFLAGS = \
 	-I$(top_srcdir)/lib/include \
-	$(libusb_CFLAGS)
+	$(libusb_CFLAGS) \
+	-Wall -Werror
 
 adslsniffer_test_SOURCES = \
 	adslsniffer_test.cpp

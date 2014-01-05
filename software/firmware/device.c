@@ -77,10 +77,10 @@ BOOL handle_vendorcommand(BYTE cmd) {
 	} else if(cmd == 0x91) {
 		short val = SETUP_VALUE();
 		if(val != 0) {
-		 usb_debug_enable();
-		 USB_PRINTF(6, "Debug enabled");
+			usb_debug_enable();
+			USB_PRINTF(6, "Debug enabled");
 		} else {
-		 usb_debug_disable();
+			usb_debug_disable();
 		}
 		EP0BCH = 0;
 		EP0BCL = 0;
