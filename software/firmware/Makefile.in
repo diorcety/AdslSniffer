@@ -1,7 +1,9 @@
 SOURCES=fw.c device.c utils.c debug.c
 A51_SOURCES=dscr.a51
 BASENAME=firmware
-
+SDCC=@SDCC@
+SDAS8051=@SDAS8051@
+SDCCLIB=@SDCCLIB@
 
 all: ihx
 
