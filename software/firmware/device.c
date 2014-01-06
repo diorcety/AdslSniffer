@@ -18,6 +18,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 #include <fx2macros.h>
+#include <fx2timer.h>
+#include <fx2ints.h>
 #include <delay.h>
 #include <setupdat.h>
 #include "utils.h"
@@ -70,7 +72,7 @@ BOOL handle_get_descriptor() {
 
 //******************* VENDOR COMMAND HANDLERS **************************
 __bit bench_start = 0;
-long count = 0;
+WORD count = 0;
 BOOL handle_vendorcommand(BYTE cmd) {
 	if(cmd == 0x90) {
 		reset();
@@ -98,6 +100,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		EP0BCH = 0;
 		EP0BCL = 0;
 		EP0CS |= bmHSNAK;
+		fx2_setup_timer0(29);
 		return TRUE;
 	} else if(cmd == 0x93) {
 		USB_PRINTF(6, "Stop");
@@ -109,6 +112,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		EP0BCH = 0;
 		EP0BCL = 0;
 		EP0CS |= bmHSNAK;
+		fx2_setup_timer0(0);
 		return TRUE;
 	} else if(cmd == 0x94) {
 		__bit enabled  = usb_debug_enabled();
@@ -150,6 +154,8 @@ void reset() {
 	
 	IOA |= (0x1 << 3); // High at start
 	OEA |= (0x1 << 3); // OEA 3 Output
+
+	DISABLE_TIMER0();
  
 	usb_debug_disable();
 }
@@ -174,22 +180,42 @@ void main_init() {
 	EP8CFG &= ~bmVALID;  SYNCDELAY();
 }
 
+
+
 #define BUFF_SIZE (512)
+WORD timer = 0;
+
+void send() {
+	EP2FIFOBUF[0] = LSB(count);
+	EP2FIFOBUF[1] = MSB(count);
+	EP2FIFOBUF[BUFF_SIZE-5] = LSB(timer);
+	EP2FIFOBUF[BUFF_SIZE-4] = MSB(timer);
+	EP2FIFOBUF[BUFF_SIZE-3] = MICROFRAME;
+	EP2FIFOBUF[BUFF_SIZE-2] = USBFRAMEL;
+	EP2FIFOBUF[BUFF_SIZE-1] = USBFRAMEH;
+
+	// ARM ep2 in
+	EP2BCH = MSB(BUFF_SIZE);
+	SYNCDELAY();
+	EP2BCL = LSB(BUFF_SIZE);
+	SYNCDELAY();
+	++count;
+	
+}
 void main_loop() {
 	if(bench_start) {
+#if 0
 		while((EP2468STAT & bmEP2FULL) == 0) {
-			EP2FIFOBUF[0] = LSB(count);
-			EP2FIFOBUF[1] = MSB(count);
-			EP2FIFOBUF[BUFF_SIZE-3] = MICROFRAME;
-			EP2FIFOBUF[BUFF_SIZE-2] = USBFRAMEL;
-			EP2FIFOBUF[BUFF_SIZE-1] = USBFRAMEH;
-
-			// ARM ep2 in
-			EP2BCH = MSB(BUFF_SIZE);
-			SYNCDELAY();
-			EP2BCL = LSB(BUFF_SIZE);
-			SYNCDELAY();
-			++count;
+			send();
 		}
+#endif
+	}
+	
+}
+
+void timer0_callback() {
+	++timer;
+	if((EP2468STAT & bmEP2FULL) == 0) {
+		send();
 	}
 }

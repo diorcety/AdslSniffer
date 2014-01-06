@@ -72,7 +72,7 @@ private:
 	struct libusb_transfer* mTransfer;
 	unsigned char* mBuffer;
 	size_t	mBufferSize;
-	std::function<void(const std::shared_ptr<USBBuffer>&)> mCallBack;
+	std::function<void(const std::shared_ptr<USBBuffer>&&)> mCallBack;
 	
 	void transfer_callback(struct libusb_transfer *transfer);
 	static void __transfer_callback(struct libusb_transfer *transfer);
@@ -80,14 +80,14 @@ private:
 public:
 	USBBuffer(size_t size);
 	
-	int send(USBDevice &device, std::function<void(const std::shared_ptr<USBBuffer>&)> cb, unsigned char endpoint, size_t len, unsigned int timeout);
+	int send(USBDevice &device, std::function<void(const std::shared_ptr<USBBuffer>&&)> cb, unsigned char endpoint, size_t len, unsigned int timeout);
 	
-	unsigned char* getBuffer();
-	size_t getBufferSize();
+	unsigned char* getBuffer() const;
+	size_t getBufferSize() const;
 	
-	int getStatus();
-	size_t getLength();
-	size_t getActualLength();
+	int getStatus() const;
+	size_t getLength() const;
+	size_t getActualLength() const;
 	
 	~USBBuffer();
 };
@@ -99,20 +99,21 @@ private:
 	
 	USBDevice* mDevice;
 	
-	std::function<void (int)> mCallback;
+	std::function<void (int, const std::shared_ptr<const USBBuffer> &&)> mCallback;
+	int mTimeout;
 	int mError;
 	int mEndpoint;
 	size_t mBytes;
 		
 	void handleBuffers();
-	void receive(const std::shared_ptr<USBBuffer> &buffer);
+	void receive(const std::shared_ptr<USBBuffer> &&buffer);
 	
 private:
 	virtual bool start();
 	
 public:
-	USBRequest(size_t packet_count, size_t buffer_size);
-	bool send(USBDevice &device, unsigned char endpoint, size_t bytes, std::function<void (int)> callback=std::function<void (int)>());
+	USBRequest(size_t packet_count, size_t buffer_size, int timeout = 3000);
+	bool send(USBDevice &device, unsigned char endpoint, size_t bytes, std::function<void (int, const std::shared_ptr<const USBBuffer> &&buffer)> callback=std::function<void (int, const std::shared_ptr<const USBBuffer> &&)>());
 	
 	~USBRequest();
 };

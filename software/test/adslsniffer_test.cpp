@@ -44,7 +44,7 @@ int read_debug(libusb_device_handle *hndl, int wait = 1) {
 	return rv;
 }
 
-#define BENCH_DATA_SIZE (16*1024*1024)
+#define BENCH_DATA_SIZE (2*8832*1000) // 8832*1000 capture of 16 bits
 int nb_transfer = 0;
 #ifdef WIN32
 LARGE_INTEGER bench_base_time;
@@ -96,6 +96,24 @@ void bench_stats() {
 	printf("Stats %d bytes in %f ms : %f kbytes/s\n", BENCH_DATA_SIZE, time, rate);
 	printf("Nb transfer %d\n", nb_transfer);
 	printf("--------------------------------------------\n");
+}
+
+void usb_cb(int status, const std::shared_ptr<const USBBuffer> &&usbBuffer) {
+	return;
+	if(usbBuffer) {
+		int size = usbBuffer->getActualLength();
+		unsigned char *buffer = usbBuffer->getBuffer();
+		if(size < 7) {
+			std::cerr << "Invalid data" << std::endl;
+			return;
+		}
+		unsigned short count = buffer[1] << 8 | buffer[0];
+		unsigned short timer = buffer[size-4] << 8 | buffer[size-5];
+		unsigned int microframe = buffer[size-3];
+		unsigned short frame = buffer[size-1] << 8 | buffer[size-2];
+		
+		std::cout << "Get count:" << count << "\ttimer:" << timer << "\tmicro:" << microframe << "\tframe:" << frame << std::endl;
+	}
 }
 
 int main(int argc, char* argv[]) {
@@ -207,7 +225,7 @@ int main(int argc, char* argv[]) {
 	
 	// Send request
 	bench_start();
-	request.send(device, 0x82, BENCH_DATA_SIZE);
+	request.send(device, 0x82, BENCH_DATA_SIZE, usb_cb);
 	bench_inc();
 	request.wait<>();
 	bench_stop();

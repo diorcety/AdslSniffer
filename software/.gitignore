@@ -7,6 +7,7 @@ Makefile
 Makefile.in
 aclocal.m4
 configure
+compile
 config.*
 autom4te.cache
 depcomp

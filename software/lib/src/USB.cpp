@@ -72,30 +72,30 @@ USBBuffer::USBBuffer(size_t size): mBufferSize(size) {
 	mBuffer = new unsigned char[mBufferSize];
 }
 
-int USBBuffer::send(USBDevice &device, std::function<void(const std::shared_ptr<USBBuffer>&)> cb, unsigned char endpoint, size_t len, unsigned int timeout) {
+int USBBuffer::send(USBDevice &device, std::function<void(const std::shared_ptr<USBBuffer>&&)> cb, unsigned char endpoint, size_t len, unsigned int timeout) {
 	mCallBack = cb;
 	libusb_fill_bulk_transfer(mTransfer, device.getDeviceHandle(),
 		endpoint, mBuffer, len, (libusb_transfer_cb_fn)__transfer_callback, this, timeout);
 	return libusb_submit_transfer(mTransfer);
 }
 
-unsigned char* USBBuffer::getBuffer() {
+unsigned char* USBBuffer::getBuffer() const {
 	return mBuffer;
 }
 
-size_t USBBuffer::getBufferSize() {
+size_t USBBuffer::getBufferSize() const {
 	return mBufferSize;
 }
 
-int USBBuffer::getStatus() {
+int USBBuffer::getStatus() const {
 	return mTransfer->status;
 }
 
-size_t USBBuffer::getLength() {
+size_t USBBuffer::getLength() const {
 	return mTransfer->length;
 }
 
-size_t USBBuffer::getActualLength() {
+size_t USBBuffer::getActualLength() const {
 	return mTransfer->actual_length;
 }
 
@@ -108,25 +108,29 @@ bool USBRequest::start() {
 	return true;
 }
 
-USBRequest::USBRequest(size_t packet_count, size_t buffer_size) {
+USBRequest::USBRequest(size_t packet_count, size_t buffer_size, int timeout): mTimeout(timeout) {
 	for(size_t i = 0; i < packet_count; ++i) {
 		idle_buffers.push_back(std::make_shared<USBBuffer>(buffer_size));
 	}
 }
 
-void USBRequest::receive(const std::shared_ptr<USBBuffer> &buffer) {
+void USBRequest::receive(const std::shared_ptr<USBBuffer> &&buffer) {
 	std::unique_lock<std::recursive_mutex> lock(*this);
+	int status = buffer->getStatus();
 	
 	// Reset buffer
 	processing_buffers.remove(buffer);
+	if(mCallback) {
+		mCallback(status, buffer);
+	}
 	idle_buffers.push_back(buffer);
 	
 	mBytes += buffer->getLength();
-	if(buffer->getStatus() == LIBUSB_TRANSFER_COMPLETED) {
+	if(status == LIBUSB_TRANSFER_COMPLETED) {
 		mBytes -= buffer->getActualLength();
 	} else {
-		std::cerr << "Error " << buffer->getStatus() << " with buffer 0x" << buffer << std::endl;
-		mError = buffer->getStatus();
+		std::cerr << "Error " << status << " with buffer 0x" << buffer << std::endl;
+		mError = status;
 	}
 
 	handleBuffers();
@@ -141,7 +145,7 @@ void USBRequest::handleBuffers() {
 		if(size > buffer->getBufferSize())
 			size = buffer->getBufferSize();
 		mBytes -= size;
-		int ret = buffer->send(*mDevice, std::bind(&USBRequest::receive, this, std::placeholders::_1), mEndpoint, size, 3000);
+		int ret = buffer->send(*mDevice, std::bind(&USBRequest::receive, this, std::placeholders::_1), mEndpoint, size, mTimeout);
 		if(ret == 0) {
 			processing_buffers.push_back(buffer);
 		} else {
@@ -149,21 +153,22 @@ void USBRequest::handleBuffers() {
 			mError = ret;
 		}
 	}
+	
 	if(mBytes == 0 || mError != 0) {
 		if(processing_buffers.empty()) {
-			std::cerr << "Request end: (remaining " << mBytes << " bytes)"<< std::endl;
+			std::cerr << "Request end: (remaining " << mBytes << " bytes)" << std::endl;
 			if(mError != 0) {
 				std::cerr << "Request error: " << mError << std::endl;
 			}
 			if(mCallback) {
-				mCallback(mError);
+				mCallback(mError, std::shared_ptr<USBBuffer>());
 			}
 			terminate();
 		}
 	}
 }
 
-bool USBRequest::send(USBDevice &device, unsigned char endpoint, size_t request_bytes, std::function<void (int)> callback) {
+bool USBRequest::send(USBDevice &device, unsigned char endpoint, size_t request_bytes, std::function<void (int, const std::shared_ptr<const USBBuffer> &&)> callback) {
 	std::unique_lock<std::recursive_mutex> lock(*this);
 	if(USBAsync::start()) {
 		std::cerr << "Request start: (" << request_bytes << " bytes)" <<std::endl;

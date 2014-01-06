@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <fx2macros.h>
 #include <fx2ints.h>
+#include <fx2timer.h>
 #include <autovector.h>
 #include <delay.h>
 #include <setupdat.h>
@@ -121,4 +122,8 @@ void hispeed_isr() __interrupt HISPEED_ISR {
 void suspend_isr() __interrupt SUSPEND_ISR {
 	dosuspend=TRUE;
 	CLEAR_SUSPEND();
+}
+
+void timer0_isr() __interrupt TF0_ISR {
+	fx2_timer0_isr();
 }
