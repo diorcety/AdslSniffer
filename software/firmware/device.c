@@ -63,6 +63,10 @@ BOOL handle_set_configuration(BYTE cfg) {
 	return TRUE;
 }
 
+BOOL handle_get_descriptor() {
+	return FALSE;
+}
+
 
 //******************* VENDOR COMMAND HANDLERS **************************
 __bit bench_start = 0;
