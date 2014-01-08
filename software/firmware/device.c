@@ -161,6 +161,20 @@ void reset() {
 }
 
 //********************  INIT ***********************
+#define BUFF_SIZE (512)
+
+void init_waveform() {
+	short i;
+	short *wdata = (short *)EP2FIFOBUF;
+	for(i = 0; i < BUFF_SIZE/2; ++i) {
+		if(i < BUFF_SIZE/4) {
+			*wdata = -32768;
+		} else {
+			*wdata = 32767;
+		}
+		++wdata;
+	}
+}
 
 void main_init() {
 	REVCTL = 0x03;
@@ -168,6 +182,8 @@ void main_init() {
 	PORTACFG = 0x00;
 	SETIF48MHZ();
 	SYNCDELAY(); 
+
+	init_waveform();
   
 	reset();
 
@@ -181,19 +197,9 @@ void main_init() {
 }
 
 
-
-#define BUFF_SIZE (512)
 WORD timer = 0;
 
 void send() {
-	EP2FIFOBUF[0] = LSB(count);
-	EP2FIFOBUF[1] = MSB(count);
-	EP2FIFOBUF[BUFF_SIZE-5] = LSB(timer);
-	EP2FIFOBUF[BUFF_SIZE-4] = MSB(timer);
-	EP2FIFOBUF[BUFF_SIZE-3] = MICROFRAME;
-	EP2FIFOBUF[BUFF_SIZE-2] = USBFRAMEL;
-	EP2FIFOBUF[BUFF_SIZE-1] = USBFRAMEH;
-
 	// ARM ep2 in
 	EP2BCH = MSB(BUFF_SIZE);
 	SYNCDELAY();
@@ -215,7 +221,9 @@ void main_loop() {
 
 void timer0_callback() {
 	++timer;
+#if 1
 	if((EP2468STAT & bmEP2FULL) == 0) {
 		send();
 	}
+#endif
 }

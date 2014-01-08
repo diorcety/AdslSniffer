@@ -88,32 +88,22 @@ void bench_stats() {
 	time *= 1000;
 #else
 	time =  bench_stop_time.tv_nsec - bench_start_time.tv_nsec;
-	time /= 1000000;
-	time += (bench_stop_time.tv_sec - bench_start_time.tv_sec) * 1000;
+	time /= 1000000000;
+	time += (bench_stop_time.tv_sec - bench_start_time.tv_sec);
 #endif
-	rate = (float) BENCH_DATA_SIZE / time;
+	rate = (float) BENCH_DATA_SIZE / 1024 / time;
+	printf("============================================\n");
+	printf("Stats                                       \n");
 	printf("--------------------------------------------\n");
-	printf("Stats %d bytes in %f ms : %f kbytes/s\n", BENCH_DATA_SIZE, time, rate);
-	printf("Nb transfer %d\n", nb_transfer);
-	printf("--------------------------------------------\n");
+	printf("Transfer: %d kbytes                         \n", BENCH_DATA_SIZE/1024);
+	printf("Nb transfer: %d                             \n", nb_transfer);
+	printf("Time: %f ms                                 \n", time);
+	printf("Rate: %f kbytes/s                           \n", rate);
+	printf("============================================\n");
 }
 
 void usb_cb(int status, const std::shared_ptr<const USBBuffer> &&usbBuffer) {
 	return;
-	if(usbBuffer) {
-		int size = usbBuffer->getActualLength();
-		unsigned char *buffer = usbBuffer->getBuffer();
-		if(size < 7) {
-			std::cerr << "Invalid data" << std::endl;
-			return;
-		}
-		unsigned short count = buffer[1] << 8 | buffer[0];
-		unsigned short timer = buffer[size-4] << 8 | buffer[size-5];
-		unsigned int microframe = buffer[size-3];
-		unsigned short frame = buffer[size-1] << 8 | buffer[size-2];
-		
-		std::cout << "Get count:" << count << "\ttimer:" << timer << "\tmicro:" << microframe << "\tframe:" << frame << std::endl;
-	}
 }
 
 int main(int argc, char* argv[]) {
