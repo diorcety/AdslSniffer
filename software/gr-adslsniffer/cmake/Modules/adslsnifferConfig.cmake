@@ -1,0 +1,30 @@
+INCLUDE(FindPkgConfig)
+PKG_CHECK_MODULES(PC_ADSLSNIFFER adslsniffer)
+
+FIND_PATH(
+    ADSLSNIFFER_INCLUDE_DIRS
+    NAMES adslsniffer/api.h
+    HINTS $ENV{ADSLSNIFFER_DIR}/include
+        ${PC_ADSLSNIFFER_INCLUDEDIR}
+    PATHS ${CMAKE_INSTALL_PREFIX}/include
+          /usr/local/include
+          /usr/include
+)
+
+FIND_LIBRARY(
+    ADSLSNIFFER_LIBRARIES
+    NAMES gnuradio-adslsniffer
+    HINTS $ENV{ADSLSNIFFER_DIR}/lib
+        ${PC_ADSLSNIFFER_LIBDIR}
+    PATHS ${CMAKE_INSTALL_PREFIX}/lib
+          ${CMAKE_INSTALL_PREFIX}/lib64
+          /usr/local/lib
+          /usr/local/lib64
+          /usr/lib
+          /usr/lib64
+)
+
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(ADSLSNIFFER DEFAULT_MSG ADSLSNIFFER_LIBRARIES ADSLSNIFFER_INCLUDE_DIRS)
+MARK_AS_ADVANCED(ADSLSNIFFER_LIBRARIES ADSLSNIFFER_INCLUDE_DIRS)
+
