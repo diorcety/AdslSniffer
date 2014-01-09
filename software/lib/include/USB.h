@@ -27,12 +27,22 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <chrono>
 #include <thread>
 #include <functional>
-#ifdef _WIN32
-	#include <libusbx-1.0/libusb.h>
-#else
-	#include <libusb-1.0/libusb.h>
-#endif
+#include <exception>
+#include <libusb.h>
 
+class USBException: public std::exception {
+private:
+	int mCode;
+	std::string mWhat;	
+	std::string mWhere;
+
+public:
+	USBException(int code, const std::string &&where = std::string());
+	int code() const;
+
+	virtual const char* where() const throw();
+	virtual const char* what() const throw();
+};
 
 class USBAsync: protected std::recursive_mutex {
 private:
@@ -42,7 +52,7 @@ private:
 	bool mStarted;
 	
 protected:
-	void terminate();
+	virtual void terminate();
 	bool isCompleted();
 	
 public:
@@ -68,11 +78,15 @@ public:
 class USBDevice;
 
 class USBBuffer: public std::enable_shared_from_this<USBBuffer> {
+public:
+	typedef std::shared_ptr<USBBuffer> Ptr;
+	typedef std::shared_ptr<const USBBuffer> ConstPtr;
+
 private:
 	struct libusb_transfer* mTransfer;
 	unsigned char* mBuffer;
 	size_t	mBufferSize;
-	std::function<void(const std::shared_ptr<USBBuffer>&&)> mCallBack;
+	std::function<void(const USBBuffer::Ptr &&)> mCallBack;
 	
 	void transfer_callback(struct libusb_transfer *transfer);
 	static void __transfer_callback(struct libusb_transfer *transfer);
@@ -80,7 +94,7 @@ private:
 public:
 	USBBuffer(size_t size);
 	
-	int send(USBDevice &device, std::function<void(const std::shared_ptr<USBBuffer>&&)> cb, unsigned char endpoint, size_t len, unsigned int timeout);
+	int send(USBDevice &device, std::function<void(const USBBuffer::Ptr &&)> cb, unsigned char endpoint, size_t len, unsigned int timeout);
 	
 	unsigned char* getBuffer() const;
 	size_t getBufferSize() const;
@@ -97,40 +111,62 @@ private:
 	std::list<std::shared_ptr<USBBuffer>> idle_buffers;
 	std::list<std::shared_ptr<USBBuffer>> processing_buffers;
 	
-	USBDevice* mDevice;
+	std::shared_ptr<USBDevice> mDevice;
 	
-	std::function<void (int, const std::shared_ptr<const USBBuffer> &&)> mCallback;
+	std::function<void (int, const USBBuffer::ConstPtr &&)> mCallback;
 	int mTimeout;
 	int mError;
 	int mEndpoint;
 	size_t mBytes;
 		
 	void handleBuffers();
-	void receive(const std::shared_ptr<USBBuffer> &&buffer);
+	void receive(const USBBuffer::Ptr &&buffer);
 	
 private:
 	virtual bool start();
+
+protected:
+	virtual void terminate();
 	
 public:
 	USBRequest(size_t packet_count, size_t buffer_size, int timeout = 3000);
-	bool send(USBDevice &device, unsigned char endpoint, size_t bytes, std::function<void (int, const std::shared_ptr<const USBBuffer> &&buffer)> callback=std::function<void (int, const std::shared_ptr<const USBBuffer> &&)>());
+	bool send(const std::shared_ptr<USBDevice> &device, unsigned char endpoint, size_t bytes, std::function<void (int, const USBBuffer::ConstPtr &&buffer)> callback=std::function<void (int, const USBBuffer::ConstPtr &&)>());
 	
 	~USBRequest();
 };
 
 class USBDevice {
+public:
+	typedef std::shared_ptr<USBDevice> Ptr;
+
 private:
-	libusb_device_handle *mDeviceHandle;
+	mutable libusb_device_handle *mDeviceHandle;
+	bool mOwn;
 
 public:
-	USBDevice(libusb_device_handle *hnd);
+	USBDevice(libusb_device_handle *hnd, bool own);
+	~USBDevice();
 
 	libusb_device_handle* getDeviceHandle() const;
+
+	int getConfiguration() const;
+        void setConfiguration(int configuration);
+
+	void setInterfaceAltSetting(int interface, int setting);
+        void claimInterface(int interface);
+	void releaseInterface(int interface);
+
+	bool isKernelDriverActive(int interface) const;
+	void detachKernelDriver(int interface);
+	void attachKernelDriver(int interface);
+
+	void resetDevice();
 };
 
 class USBContext: public USBAsync {
 private:
-	libusb_context* mContext;
+	mutable libusb_context* mContext;
+	bool mOwn;
 	struct timeval mTv;
 	std::thread mThread;
 	
@@ -140,8 +176,10 @@ private:
 	virtual bool start();
 	
 public:
-	USBContext(libusb_context *context);
+	USBContext();
+	USBContext(libusb_context *ctx);
 	~USBContext();
+
 	libusb_context* getContext() const;
 	
 	template<typename Rep = std::chrono::seconds::rep, typename Period = std::chrono::seconds::period>
@@ -166,6 +204,9 @@ public:
 		}
 		return ret;
 	}
+        
+	void setDebug(int level);
+	USBDevice::Ptr openDeviceWithVidPid(uint16_t vendor_id, uint16_t product_id) const;
 };
 
 #endif

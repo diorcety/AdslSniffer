@@ -20,6 +20,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "USB.h"
 #include <iostream>
 
+USBException::USBException(int code, const std::string &&where): mCode(code), mWhere(where) {
+	if(!mWhere.empty()) {
+		mWhat += mWhere + ":";
+	}
+	mWhat += "(";
+	mWhat += libusb_error_name(code);
+	mWhat += ") ";
+	mWhat += libusb_strerror((enum libusb_error)code);
+}
+
+int USBException::code() const {
+	return mCode;
+}
+
+const char* USBException::where() const throw() {
+	return mWhere.c_str();
+}
+
+const char* USBException::what() const throw() {
+	return mWhat.c_str();
+}
+
 USBAsync::USBAsync() : mStarted(false) {
 }
 
@@ -63,7 +85,7 @@ void USBBuffer::transfer_callback(struct libusb_transfer *transfer) {
 }
 
 void USBBuffer::__transfer_callback(struct libusb_transfer *transfer) {
-	std::shared_ptr<USBBuffer> buffer = reinterpret_cast<USBBuffer *>(transfer->user_data)->shared_from_this();
+	USBBuffer::Ptr buffer = reinterpret_cast<USBBuffer *>(transfer->user_data)->shared_from_this();
 	buffer->transfer_callback(transfer);
 }
 
@@ -72,7 +94,7 @@ USBBuffer::USBBuffer(size_t size): mBufferSize(size) {
 	mBuffer = new unsigned char[mBufferSize];
 }
 
-int USBBuffer::send(USBDevice &device, std::function<void(const std::shared_ptr<USBBuffer>&&)> cb, unsigned char endpoint, size_t len, unsigned int timeout) {
+int USBBuffer::send(USBDevice &device, std::function<void(const USBBuffer::Ptr &&)> cb, unsigned char endpoint, size_t len, unsigned int timeout) {
 	mCallBack = cb;
 	libusb_fill_bulk_transfer(mTransfer, device.getDeviceHandle(),
 		endpoint, mBuffer, len, (libusb_transfer_cb_fn)__transfer_callback, this, timeout);
@@ -114,7 +136,7 @@ USBRequest::USBRequest(size_t packet_count, size_t buffer_size, int timeout): mT
 	}
 }
 
-void USBRequest::receive(const std::shared_ptr<USBBuffer> &&buffer) {
+void USBRequest::receive(const USBBuffer::Ptr &&buffer) {
 	std::unique_lock<std::recursive_mutex> lock(*this);
 	int status = buffer->getStatus();
 	
@@ -138,7 +160,7 @@ void USBRequest::receive(const std::shared_ptr<USBBuffer> &&buffer) {
 
 void USBRequest::handleBuffers() {
 	while(!idle_buffers.empty() && mError == 0 && mBytes > 0) {
-		std::shared_ptr<USBBuffer> buffer = idle_buffers.front();
+		USBBuffer::Ptr buffer = idle_buffers.front();
 		idle_buffers.pop_front();
 
 		size_t size = mBytes;
@@ -161,19 +183,24 @@ void USBRequest::handleBuffers() {
 				std::cerr << "Request error: " << mError << std::endl;
 			}
 			if(mCallback) {
-				mCallback(mError, std::shared_ptr<USBBuffer>());
+				mCallback(mError, USBBuffer::Ptr());
 			}
 			terminate();
 		}
 	}
 }
 
-bool USBRequest::send(USBDevice &device, unsigned char endpoint, size_t request_bytes, std::function<void (int, const std::shared_ptr<const USBBuffer> &&)> callback) {
+void USBRequest::terminate() {
+	USBAsync::terminate();
+	mDevice.reset();
+}
+
+bool USBRequest::send(const USBDevice::Ptr &device, unsigned char endpoint, size_t request_bytes, std::function<void (int, const USBBuffer::ConstPtr &&)> callback) {
 	std::unique_lock<std::recursive_mutex> lock(*this);
 	if(USBAsync::start()) {
 		std::cerr << "Request start: (" << request_bytes << " bytes)" <<std::endl;
 		mBytes = request_bytes;
-		mDevice = &device;
+		mDevice = device;
 		mError = 0;
 		mEndpoint = endpoint;
 		mCallback = callback;
@@ -192,18 +219,94 @@ USBRequest::~USBRequest() {
 	}
 }
 
-USBDevice::USBDevice(libusb_device_handle *hnd): mDeviceHandle(hnd) {
+USBDevice::USBDevice(libusb_device_handle *hnd, bool own): mDeviceHandle(hnd), mOwn(own) {
+}
+
+
+bool USBDevice::isKernelDriverActive(int interface) const {
+	int ret = libusb_kernel_driver_active(mDeviceHandle, interface);
+	if(ret == 0) {
+		return false;
+	} else if(ret == 1) {
+		return true;
+	} else {
+		throw USBException(ret, __PRETTY_FUNCTION__);
+	}
+}
+
+void USBDevice::detachKernelDriver(int interface) {
+	int ret = libusb_detach_kernel_driver(mDeviceHandle, interface);
+	if(ret != 0) {
+		throw USBException(ret, __PRETTY_FUNCTION__);
+	}
+}
+
+void USBDevice::attachKernelDriver(int interface) {
+	int ret = libusb_detach_kernel_driver(mDeviceHandle, interface);
+	if(ret != 0) {
+		throw USBException(ret, __PRETTY_FUNCTION__);
+	}
+}
+
+void USBDevice::setConfiguration(int configuration) {
+	int ret = libusb_set_configuration(mDeviceHandle, configuration);
+	if(ret != 0) {
+		throw USBException(ret, __PRETTY_FUNCTION__);
+	}
+}
+
+int USBDevice::getConfiguration() const {
+	int configuration;
+	int ret = libusb_get_configuration(mDeviceHandle, &configuration);
+	if(ret != 0) {
+		throw USBException(ret, __PRETTY_FUNCTION__);
+	}
+	return configuration;
+}
+
+void USBDevice::claimInterface(int interface) {
+	int ret = libusb_claim_interface(mDeviceHandle, interface);
+	if(ret != 0) {
+		throw USBException(ret, __PRETTY_FUNCTION__);
+	}
+}
+
+void USBDevice::setInterfaceAltSetting(int interface, int setting) {
+	int ret = libusb_set_interface_alt_setting(mDeviceHandle, interface, setting);
+	if(ret != 0) {
+		throw USBException(ret, __PRETTY_FUNCTION__);
+	}
+}
+
+void USBDevice::releaseInterface(int interface) {
+	int ret = libusb_release_interface(mDeviceHandle, interface);
+	if(ret != 0) {
+		throw USBException(ret, __PRETTY_FUNCTION__);
+	}
+}
+
+USBDevice::~USBDevice() {
+	if(mOwn) {
+		libusb_close(mDeviceHandle);
+	}
 }
 
 libusb_device_handle* USBDevice::getDeviceHandle() const {
 	return mDeviceHandle;
 }
 
-USBContext::USBContext(libusb_context *context): mContext(context) {
+USBContext::USBContext(libusb_context *context): mContext(context), mOwn(false) {
+}
+
+USBContext::USBContext(): mOwn(true) {
+	libusb_init(&mContext);
 }
 
 USBContext::~USBContext() {
 	wait<>();
+	if(mOwn) {
+		libusb_exit(mContext);
+	}
 }
 
 libusb_context* USBContext::getContext() const {
@@ -220,3 +323,12 @@ void USBContext::run() {
 	}
 	terminate();
 }
+
+void USBContext::setDebug(int level) {
+	libusb_set_debug(mContext, level);
+}
+
+USBDevice::Ptr USBContext::openDeviceWithVidPid(uint16_t vendor, uint16_t device) const {
+	return std::make_shared<USBDevice>(libusb_open_device_with_vid_pid(mContext, vendor, device), true);
+}
+

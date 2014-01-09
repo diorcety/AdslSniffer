@@ -108,24 +108,19 @@ void usb_cb(int status, const std::shared_ptr<const USBBuffer> &&usbBuffer) {
 
 int main(int argc, char* argv[]) {
 	int rv;
-	libusb_context* ctx;
-	libusb_init(&ctx);
-	//libusb_set_debug(ctx, 4);
-	libusb_device_handle* hndl = libusb_open_device_with_vid_pid(ctx, 0x04b4, 0x1004);
-	if(hndl == NULL) {
-		printf("Can't open device\n");
-		return -100;
-	}
-	
+	USBContext context;
+	context.setDebug(4);
+	USBDevice::Ptr device = context.openDeviceWithVidPid(0x04b4, 0x1004);
+
 #ifndef WIN32
-	rv = libusb_kernel_driver_active(hndl, 0); 
-	if (rv == 1) { 
-		rv = libusb_detach_kernel_driver(hndl, 0); 
-	} 
+	if(device->isKernelDriverActive(0)) device->detachKernelDriver(0);
 #endif
-	libusb_set_configuration(hndl, 1);
-	libusb_claim_interface(hndl, 0);
-	libusb_set_interface_alt_setting(hndl, 0, 0);
+	
+	device->setConfiguration(1);
+	device->claimInterface(0);
+	device->setInterfaceAltSetting(0, 0);
+
+	libusb_device_handle *hndl = device->getDeviceHandle();
 
 	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
  
@@ -207,8 +202,6 @@ int main(int argc, char* argv[]) {
 	read_debug(hndl, 0);
 	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
 	
-	USBContext context(ctx);
-	USBDevice device(hndl);
 	USBRequest request(8, 2048);
 	
 	context.start<>();
@@ -258,8 +251,9 @@ int main(int argc, char* argv[]) {
 	// Empty debug
 	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
 
-	libusb_release_interface(hndl, 0);
-	libusb_close(hndl);
+	// Close device
+	device->releaseInterface(0);
+	device.reset();
 	
 	printf("Test end\n");
 	bench_stats();
