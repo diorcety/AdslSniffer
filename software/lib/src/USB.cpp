@@ -94,11 +94,37 @@ USBBuffer::USBBuffer(size_t size): mBufferSize(size) {
 	mBuffer = new unsigned char[mBufferSize];
 }
 
-int USBBuffer::send(USBDevice &device, std::function<void(const USBBuffer::Ptr &&)> cb, unsigned char endpoint, size_t len, unsigned int timeout) {
+int USBBuffer::fillBulkTransfer(USBDevice &device, std::function<void(const USBBuffer::Ptr &&)> cb, unsigned char endpoint, size_t len, unsigned int timeout) {
 	mCallBack = cb;
 	libusb_fill_bulk_transfer(mTransfer, device.getDeviceHandle(),
 		endpoint, mBuffer, len, (libusb_transfer_cb_fn)__transfer_callback, this, timeout);
 	return libusb_submit_transfer(mTransfer);
+}
+
+int USBBuffer::controlTransfer(USBDevice &device, uint8_t bmRequestType, uint8_t bRequest, uint16_t wValue, uint16_t wIndex, uint16_t len, unsigned int timeout) {
+	int ret = libusb_control_transfer(device.getDeviceHandle(), bmRequestType, bRequest, wValue, wIndex, mBuffer, len, timeout);
+	if(ret < 0) {
+		throw USBException(ret, __PRETTY_FUNCTION__);
+	}
+	return ret;
+}
+
+int USBBuffer::bulkTransfer(USBDevice &device, unsigned char endpoint, int len, unsigned int timeout) {
+	int transfered;
+	int ret = libusb_bulk_transfer(device.getDeviceHandle(), endpoint, mBuffer, len, &transfered, timeout);
+	if(ret != 0) {
+		throw USBException(ret, __PRETTY_FUNCTION__);
+	}
+	return transfered;
+}
+
+int USBBuffer::interruptTransfer(USBDevice &device, unsigned char endpoint, int len, unsigned int timeout) {
+	int transfered;
+	int ret = libusb_interrupt_transfer(device.getDeviceHandle(), endpoint, mBuffer, len, &transfered, timeout);
+	if(ret != 0) {
+		throw USBException(ret, __PRETTY_FUNCTION__);
+	}
+	return transfered;
 }
 
 unsigned char* USBBuffer::getBuffer() const {
@@ -167,7 +193,7 @@ void USBRequest::handleBuffers() {
 		if(size > buffer->getBufferSize())
 			size = buffer->getBufferSize();
 		mBytes -= size;
-		int ret = buffer->send(*mDevice, std::bind(&USBRequest::receive, this, std::placeholders::_1), mEndpoint, size, mTimeout);
+		int ret = buffer->fillBulkTransfer(*mDevice, std::bind(&USBRequest::receive, this, std::placeholders::_1), mEndpoint, size, mTimeout);
 		if(ret == 0) {
 			processing_buffers.push_back(buffer);
 		} else {

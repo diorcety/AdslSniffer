@@ -94,7 +94,11 @@ private:
 public:
 	USBBuffer(size_t size);
 	
-	int send(USBDevice &device, std::function<void(const USBBuffer::Ptr &&)> cb, unsigned char endpoint, size_t len, unsigned int timeout);
+	int fillBulkTransfer(USBDevice &device, std::function<void(const USBBuffer::Ptr &&)> cb, unsigned char endpoint, size_t len, unsigned int timeout = 3000);
+	
+	int controlTransfer(USBDevice &device, uint8_t bmRequestType, uint8_t bRequest, uint16_t wValue, uint16_t wIndex, uint16_t len, unsigned int timeout = 3000);
+	int bulkTransfer(USBDevice &device, unsigned char endpoint, int len, unsigned int timeout = 3000);
+	int interruptTransfer(USBDevice &device, unsigned char endpoint, int len, unsigned int timeout = 3000);
 	
 	unsigned char* getBuffer() const;
 	size_t getBufferSize() const;

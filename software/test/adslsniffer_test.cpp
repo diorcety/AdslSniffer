@@ -97,7 +97,7 @@ void bench_stats() {
 	printf("--------------------------------------------\n");
 	printf("Transfer: %d kbytes                         \n", BENCH_DATA_SIZE/1024);
 	printf("Nb transfer: %d                             \n", nb_transfer);
-	printf("Time: %f ms                                 \n", time);
+	printf("Time: %f s                                  \n", time);
 	printf("Rate: %f kbytes/s                           \n", rate);
 	printf("============================================\n");
 }
@@ -109,7 +109,7 @@ void usb_cb(int status, const std::shared_ptr<const USBBuffer> &&usbBuffer) {
 int main(int argc, char* argv[]) {
 	int rv;
 	USBContext context;
-	context.setDebug(4);
+	//context.setDebug(4);
 	USBDevice::Ptr device = context.openDeviceWithVidPid(0x04b4, 0x1004);
 
 #ifndef WIN32
