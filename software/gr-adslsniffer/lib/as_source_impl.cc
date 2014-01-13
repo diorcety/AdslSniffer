@@ -34,6 +34,10 @@ namespace gr {
       return gnuradio::get_initial_sptr
         (new as_source_impl());
     }
+    
+    const uint16_t as_source_impl::sVendorId = 0x04b4;
+    const uint16_t as_source_impl::sDeviceId = 0x1004;
+    const uint8_t as_source_impl::sEndpoint = 0x82;
 
     /*
      * The private constructor
@@ -42,7 +46,8 @@ namespace gr {
       : gr::sync_block("as_source",
               gr::io_signature::make(0, 0, 0),
               gr::io_signature::make(1, 1, sizeof(float)))
-    {}
+    {
+    }
 
     /*
      * Our virtual destructor.

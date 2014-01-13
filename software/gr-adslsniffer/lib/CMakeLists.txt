@@ -23,14 +23,23 @@
 include(GrPlatform) #define LIB_SUFFIX
 
 include_directories(${Boost_INCLUDE_DIR})
+include_directories(${LIBUSB_INCLUDE_DIR})
 link_directories(${Boost_LIBRARY_DIRS})
+link_directories(${LIBUSB_LIBRARY_DIRS})
 
 list(APPEND adslsniffer_sources
     as_source_impl.cc
 )
 
 add_library(gnuradio-adslsniffer SHARED ${adslsniffer_sources})
-target_link_libraries(gnuradio-adslsniffer ${Boost_LIBRARIES} ${GNURADIO_ALL_LIBRARIES})
+
+# My lib
+SET(CMAKE_CXX_FLAGS "-std=c++11")
+include_directories(../../lib/include)
+find_library(libadslsniffer NAMES libAdslSniffer.a PATHS ../../lib/.libs/)
+target_link_libraries(gnuradio-adslsniffer ${libadslsniffer})
+
+target_link_libraries(gnuradio-adslsniffer ${Boost_LIBRARIES} ${LIBUSB_LIBRARIES} ${GNURADIO_ALL_LIBRARIES})
 set_target_properties(gnuradio-adslsniffer PROPERTIES DEFINE_SYMBOL "gnuradio_adslsniffer_EXPORTS")
 
 ########################################################################

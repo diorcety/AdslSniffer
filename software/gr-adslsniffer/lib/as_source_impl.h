@@ -22,6 +22,7 @@
 #define INCLUDED_ADSLSNIFFER_AS_SOURCE_IMPL_H
 
 #include <adslsniffer/as_source.h>
+#include <USB.h>
 
 namespace gr {
   namespace adslsniffer {
@@ -29,13 +30,22 @@ namespace gr {
     class as_source_impl : public as_source
     {
      private:
-      // Nothing to declare in this block.
+      static const uint16_t sVendorId;
+      static const uint16_t sDeviceId;
+      static const uint8_t sEndpoint;
+      USBContext mContext;
+      USBDevice::Ptr mDevice; 
 
      public:
       as_source_impl();
       ~as_source_impl();
 
-      // Where all the action really happens
+      double get_samp_rate(void);
+
+      void flush(void);
+      bool start(void);
+      bool stop(void);
+
       int work(int noutput_items,
 	       gr_vector_const_void_star &input_items,
 	       gr_vector_void_star &output_items);
