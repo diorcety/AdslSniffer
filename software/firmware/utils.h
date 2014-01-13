@@ -37,6 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define bmEPxFULL(x) bmEP##x##FULL
 #define bmEPxEMPTY(x) bmEP##x##EMPTY
 #define EPxFIFOBUF(x) EP##x##FIFOBUF
+#define EPxBUF(x) EP##x##BUF
 #define EPxBCH(x) EP##x##BCH
 #define EPxBCL(x) EP##x##BCL
 

@@ -28,6 +28,7 @@ void usb_debug_disable();
 int __usb_printf_##port(const char *format, ...)	
 
 
+DECLARE_USB_PRINTF(0);
 DECLARE_USB_PRINTF(2);
 DECLARE_USB_PRINTF(4);
 DECLARE_USB_PRINTF(6);

@@ -37,6 +37,31 @@ void usb_debug_disable() {
   usb_debug = 0;
 }
 
+#define DEFINE_USB_PRINTF_S(port)			\
+int __usb_printf_##port(const char *format, ...) {	\
+	int len; 					\
+	int ret; 					\
+	va_list argptr; 				\
+	char *dest = EPxBUF(port); 			\
+							\
+	/* Format */					\
+	dest[0]='\0';					\
+	va_start(argptr, format);			\
+	ret = vsprintf(dest, format, argptr);		\
+	va_end(argptr);					\
+							\
+	/* Send */					\
+	len = strlen(dest);				\
+	if(len > 0) {					\
+		len++;					\
+							\
+		/* ARM epx out */			\
+		EPxBCH(port)=MSB(len);			\
+		EPxBCL(port)=LSB(len);			\
+	}						\
+	return ret;					\
+}							
+
 #define DEFINE_USB_PRINTF(port)				\
 int __usb_printf_##port(const char *format, ...) {	\
 	int len; 					\
@@ -44,11 +69,9 @@ int __usb_printf_##port(const char *format, ...) {	\
 	va_list argptr; 				\
 	char *dest = EPxFIFOBUF(port); 			\
 							\
-	if(!usb_debug) return -1;			\
-							\
 	/* Wait */					\
 	while(EP2468STAT & bmEPxFULL(port)) {		\
-		 __asm					\
+		__asm					\
 		nop					\
 		nop					\
 		nop					\
@@ -78,6 +101,7 @@ int __usb_printf_##port(const char *format, ...) {	\
 	return ret;					\
 }							
 
+DEFINE_USB_PRINTF_S(0)
 DEFINE_USB_PRINTF(2)
 DEFINE_USB_PRINTF(4)
 DEFINE_USB_PRINTF(6)

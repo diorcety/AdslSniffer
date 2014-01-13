@@ -108,7 +108,9 @@ void usb_cb(int status, const std::shared_ptr<const USBBuffer> &&usbBuffer) {
 
 int main(int argc, char* argv[]) {
 	int rv;
+	unsigned int ret;
 	USBContext context;
+	USBBuffer buffer(65);
 	//context.setDebug(4);
 	USBDevice::Ptr device = context.openDeviceWithVidPid(0x04b4, 0x1004);
 
@@ -125,20 +127,6 @@ int main(int argc, char* argv[]) {
 	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
  
  	printf("AdslSniffer Test\n"); 
-	rv = libusb_control_transfer(hndl, 
-		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
-		0x94,
-		0x11,
-		0x22,
-		0,
-		0,
-		0);
-	if(rv != 0) {
-		printf ( "CONTROL Transfer failed: %s(%d)\n", libusb_error_name(rv), rv);
-		return rv;
-	}
-	read_debug(hndl, 0);
- 
 	printf("RESET\n"); 
 	rv = libusb_control_transfer(hndl, 
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
@@ -152,7 +140,24 @@ int main(int argc, char* argv[]) {
 		printf ( "CONTROL Transfer failed: %s(%d)\n", libusb_error_name(rv), rv);
 		return rv;
 	}
+
+	ret = buffer.controlTransfer(*device, LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE, 0x94, 0x11, 0x22, buffer.getBufferSize()-1);
+	if(ret < buffer.getBufferSize()) {
+		unsigned char *cBuffer = buffer.getBuffer();
+		cBuffer[ret] = '\0';
+		std::cout << cBuffer << std::endl;
+	} else {
+		std::cerr << "Error during version grabbing" << std::endl;
+	}
 	
+	ret = buffer.controlTransfer(*device, LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE, 0x95, 0x11, 0x22, buffer.getBufferSize()-1);
+	if(ret == 4) {
+		unsigned int *rate = (unsigned int *)buffer.getBuffer();
+		std::cout << "Sample rate: " << *rate << std::endl;
+	} else {
+		std::cerr << "Error during sample rate grabbing" << std::endl;
+	}
+ 
 	printf("Enable debug\n");
 	rv = libusb_control_transfer(hndl, 
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
@@ -166,7 +171,8 @@ int main(int argc, char* argv[]) {
 		printf ( "CONTROL(Debug) Transfer failed: %s(%d)\n", libusb_error_name(rv), rv);
 		return rv;
 	}
-	read_debug(hndl, 0);
+
+	read_debug(hndl, 1000);
 	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
 	
 	printf("Print test\n");
@@ -182,7 +188,8 @@ int main(int argc, char* argv[]) {
 		printf ( "CONTROL(Debug) Transfer failed: %s(%d)\n", libusb_error_name(rv), rv);
 		return rv;
 	}
-	read_debug(hndl, 0);
+
+	read_debug(hndl, 1000);
 	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
 	
 	

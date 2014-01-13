@@ -115,19 +115,23 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		fx2_setup_timer0(0);
 		return TRUE;
 	} else if(cmd == 0x94) {
-		__bit enabled  = usb_debug_enabled();
-		if(!enabled) {
-			usb_debug_enable();
-		}
-		USB_PRINTF(6, "AdslSniffer V0.0.1");
-		if(!enabled) {
-			usb_debug_disable();
-		}
-		EP0BCH = 0;
-		EP0BCL = 0;
+ 		USB_PRINTF(0, "AdslSniffer V0.0.1");
+		//EP0BUF[0] = 'A';
+		//EP0BUF[1] = 'B';
+		//EP0BUF[2] = 'C';
+		//EP0BCH = 0;
+		//EP0BCL = 3;
+		EP0CS |= bmHSNAK;
+ 		return TRUE;
+	} else if(cmd == 0x95) {
+		WORD size = sizeof(DWORD);
+		DWORD *rate = (DWORD*)EP0BUF;
+		*rate = 8832000;
+		EP0BCH = MSB(size);
+		EP0BCL = LSB(size);
 		EP0CS |= bmHSNAK;
 		return TRUE;
-	}else if(cmd == 0x99) {
+	} else if(cmd == 0x99) {
 		EP0BCH = 0;
 		EP0BCL = 0;
 		EP0CS |= bmHSNAK;
