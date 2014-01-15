@@ -37,7 +37,7 @@ private:
 	std::string mWhere;
 
 public:
-	USBException(int code, const std::string &&where = std::string());
+	USBException(int code, std::string &&where = std::string());
 	int code() const;
 
 	virtual const char* where() const throw();
@@ -80,21 +80,20 @@ class USBDevice;
 class USBBuffer: public std::enable_shared_from_this<USBBuffer> {
 public:
 	typedef std::shared_ptr<USBBuffer> Ptr;
-	typedef std::shared_ptr<const USBBuffer> ConstPtr;
 
 private:
 	struct libusb_transfer* mTransfer;
-	unsigned char* mBuffer;
 	size_t	mBufferSize;
-	std::function<void(const USBBuffer::Ptr &&)> mCallBack;
+	unsigned char* mBuffer;
+	std::function<void(const USBBuffer::Ptr &)> mCallBack;
 	
 	void transfer_callback(struct libusb_transfer *transfer);
 	static void __transfer_callback(struct libusb_transfer *transfer);
 	
 public:
-	USBBuffer(size_t size);
+	USBBuffer(size_t size, unsigned char* buffer = NULL);
 	
-	void fillBulkTransfer(USBDevice &device, std::function<void(const USBBuffer::Ptr &&)> cb, unsigned char endpoint, size_t len, unsigned int timeout = 3000);
+	void fillBulkTransfer(USBDevice &device, std::function<void(const USBBuffer::Ptr &)> cb, unsigned char endpoint, size_t len, unsigned int timeout = 3000);
 	unsigned int controlTransfer(USBDevice &device, uint8_t bmRequestType, uint8_t bRequest, uint16_t wValue, uint16_t wIndex, uint16_t len, unsigned int timeout = 3000);
 	unsigned int bulkTransfer(USBDevice &device, unsigned char endpoint, int len, unsigned int timeout = 3000);
 	unsigned int interruptTransfer(USBDevice &device, unsigned char endpoint, int len, unsigned int timeout = 3000);
@@ -105,25 +104,30 @@ public:
 	int getStatus() const;
 	size_t getLength() const;
 	size_t getActualLength() const;
+	USBBuffer::Ptr steal();
 	
 	~USBBuffer();
 };
 
 class USBRequest: public USBAsync {
+public:
+	typedef std::shared_ptr<USBRequest> Ptr;
+	typedef long long size;
 private:
 	std::list<std::shared_ptr<USBBuffer>> idle_buffers;
 	std::list<std::shared_ptr<USBBuffer>> processing_buffers;
 	
 	std::shared_ptr<USBDevice> mDevice;
 	
-	std::function<void (int, const USBBuffer::ConstPtr &&)> mCallback;
+	std::function<void (int, const USBBuffer::Ptr &)> mCallback;
 	int mTimeout;
 	int mError;
 	int mEndpoint;
-	size_t mBytes;
+	size mBytes;
+	size mRequestedBytes;
 		
 	void handleBuffers();
-	void receive(const USBBuffer::Ptr &&buffer);
+	void receive(const USBBuffer::Ptr &buffer);
 	
 private:
 	virtual bool start();
@@ -133,7 +137,7 @@ protected:
 	
 public:
 	USBRequest(size_t packet_count, size_t buffer_size, int timeout = 3000);
-	bool send(const std::shared_ptr<USBDevice> &device, unsigned char endpoint, size_t bytes, std::function<void (int, const USBBuffer::ConstPtr &&buffer)> callback=std::function<void (int, const USBBuffer::ConstPtr &&)>());
+	bool send(const std::shared_ptr<USBDevice> &device, unsigned char endpoint, size bytes, std::function<void (int, const USBBuffer::Ptr &buffer)> callback=std::function<void (int, const USBBuffer::Ptr &)>());
 	
 	~USBRequest();
 };

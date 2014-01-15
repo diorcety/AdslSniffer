@@ -102,7 +102,7 @@ void bench_stats() {
 	printf("============================================\n");
 }
 
-void usb_cb(int status, const std::shared_ptr<const USBBuffer> &&usbBuffer) {
+void usb_cb(int status, const std::shared_ptr<const USBBuffer> &usbBuffer) {
 	return;
 }
 

@@ -33,14 +33,23 @@ namespace gr {
       static const uint16_t sVendorId;
       static const uint16_t sDeviceId;
       static const uint8_t sEndpoint;
+      const size_t mBufferSize;
       USBContext mContext;
       USBDevice::Ptr mDevice; 
+      USBRequest::Ptr mRequest;
+
+      void check(void);
+      void configure(void);
+      void printVersion(void);
+
+      void usbCallback(int status, const std::shared_ptr<const USBBuffer> &usbBuffer);
 
      public:
       as_source_impl();
       ~as_source_impl();
 
-      double get_samp_rate(void);
+      void set_sample_rate(double rate);
+      double get_sample_rate(void);
 
       void flush(void);
       bool start(void);

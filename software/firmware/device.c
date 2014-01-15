@@ -84,7 +84,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		short val = SETUP_VALUE();
 		if(val != 0) {
 			usb_debug_enable();
-			USB_PRINTF(6, "Debug enabled");
+			USB_DEBUG_PRINTF(6, "Debug enabled");
 		} else {
 			usb_debug_disable();
 		}
@@ -93,7 +93,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		EP0CS |= bmHSNAK;
 		return TRUE;
 	} else if(cmd == 0x92) {
-		USB_PRINTF(6, "Start");
+		USB_DEBUG_PRINTF(6, "Start");
 		IOA &= ~(0x1 << 3); // Low 
 		count = 0;
 		bench_start = 1;
@@ -103,7 +103,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		fx2_setup_timer0(29);
 		return TRUE;
 	} else if(cmd == 0x93) {
-		USB_PRINTF(6, "Stop");
+		USB_DEBUG_PRINTF(6, "Stop");
 		IOA |= (0x1 << 3); // High
 		bench_start = 0;
 		FIFORESET = bmNAKALL; SYNCDELAY();
@@ -116,11 +116,6 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		return TRUE;
 	} else if(cmd == 0x94) {
  		USB_PRINTF(0, "AdslSniffer V0.0.1");
-		//EP0BUF[0] = 'A';
-		//EP0BUF[1] = 'B';
-		//EP0BUF[2] = 'C';
-		//EP0BCH = 0;
-		//EP0BCL = 3;
 		EP0CS |= bmHSNAK;
  		return TRUE;
 	} else if(cmd == 0x95) {
@@ -135,7 +130,7 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		EP0BCH = 0;
 		EP0BCL = 0;
 		EP0CS |= bmHSNAK;
-		USB_PRINTF(6, "Test");
+		USB_DEBUG_PRINTF(6, "Test");
 		return TRUE;
 	}
 	return FALSE;

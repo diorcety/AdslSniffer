@@ -34,8 +34,11 @@ DECLARE_USB_PRINTF(4);
 DECLARE_USB_PRINTF(6);
 DECLARE_USB_PRINTF(8);
 
-#define USB_PRINTF(port,format,...)	\
-__usb_printf_##port(format, ## __VA_ARGS__)	
+#define USB_PRINTF(port,format,...)					\
+__usb_printf_##port(format, ## __VA_ARGS__)				\
+
+#define USB_DEBUG_PRINTF(port,format,...)				\
+if(usb_debug_enabled())__usb_printf_##port(format, ## __VA_ARGS__)	\
 
 
 #ifdef DEBUG_FIRMWARE  
