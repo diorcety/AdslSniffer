@@ -70,12 +70,11 @@ namespace gr {
     as_source_impl::~as_source_impl()
     {
 	std::cout << "~as_source_impl" << std::endl;
-	stop();
 	if(mDevice) {
 		mDevice->releaseInterface(0);
 		mDevice.reset();
 	}
-	mContext.wait<>();
+	mContext.stop();
     }
     
     void as_source_impl::configure(void) {
@@ -145,8 +144,13 @@ namespace gr {
 	}
     }
 
-    void as_source_impl::usbCallback(int status, const std::shared_ptr<const USBBuffer> &usbBuffer) {
+    void as_source_impl::usbCallback(int status, const USBBuffer::Ptr &usbBuffer) {
 	//std::cout << "Data " << status << std::endl;
+	if(status == 0 && usbBuffer) {
+		std::unique_lock<std::mutex> lck(mMutex);
+		mBufferList.push_back(usbBuffer->steal());
+		mCondition.notify_all();
+	}
     }
 
     int
@@ -154,12 +158,47 @@ namespace gr {
 			  gr_vector_const_void_star &input_items,
 			  gr_vector_void_star &output_items)
     {
+	static const float mid = (float)(0x200);
+	static const float scale = (float)(0x1FF);
         float *out = (float *) output_items[0];
+	int i = 0;
+	while(i < noutput_items) {
+		USBBuffer::Ptr buffer;	
+		{
+			std::unique_lock<std::mutex> lck(mMutex);
+			// Timeout ... in case
+			while(mBufferList.empty()) mCondition.wait_for(lck, std::chrono::seconds(1));
+			if(!mBufferList.empty()) {
+				buffer = mBufferList.front();
+			}
+		}
 
-        // Do <+signal processing+>
+		if(buffer) {
+			if(buffer->getActualLength()%2) { 
+				std::cerr << "Mod(size, 2) != 0 !!!! Should not append" << std::endl;
+			}
+			int ninput_items = buffer->getBufferSize();
+			int j = buffer->getOffset();
+			unsigned short *in = (unsigned short *)(buffer->getBuffer() + j);
 
-        // Tell runtime system how many output items we produced.
-        return noutput_items;
+			while(i < noutput_items && j < ninput_items) {
+				*out = (((float) (0x3FF & *in)) - mid)/scale;
+				++in;
+				++out;
+				++i;
+				j+=2;		
+			}
+
+			buffer->setOffset(j);
+
+			if(buffer->getOffset() == buffer->getBufferSize()) {
+				std::unique_lock<std::mutex> lck(mMutex);
+				mBufferList.pop_front();
+			}
+		}
+	}
+
+        return i;
     }
 
   } /* namespace adslsniffer */

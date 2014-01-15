@@ -164,12 +164,12 @@ void reset() {
 
 void init_waveform() {
 	short i;
-	short *wdata = (short *)EP2FIFOBUF;
+	unsigned short *wdata = (unsigned short *)EP2FIFOBUF;
 	for(i = 0; i < BUFF_SIZE/2; ++i) {
 		if(i < BUFF_SIZE/4) {
-			*wdata = -32768;
+			*wdata = 0x0000;
 		} else {
-			*wdata = 32767;
+			*wdata = 0xFFFF;
 		}
 		++wdata;
 	}

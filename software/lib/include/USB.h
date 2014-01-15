@@ -83,7 +83,8 @@ public:
 
 private:
 	struct libusb_transfer* mTransfer;
-	size_t	mBufferSize;
+	size_t mBufferSize;
+	size_t mOffset;
 	unsigned char* mBuffer;
 	std::function<void(const USBBuffer::Ptr &)> mCallBack;
 	
@@ -102,6 +103,8 @@ public:
 	size_t getBufferSize() const;
 	
 	int getStatus() const;
+	size_t getOffset() const;
+	void setOffset(size_t offset);
 	size_t getLength() const;
 	size_t getActualLength() const;
 	USBBuffer::Ptr steal();

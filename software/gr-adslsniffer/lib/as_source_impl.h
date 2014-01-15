@@ -23,6 +23,9 @@
 
 #include <adslsniffer/as_source.h>
 #include <USB.h>
+#include <mutex>
+#include <condition_variable>
+#include <list>
 
 namespace gr {
   namespace adslsniffer {
@@ -33,16 +36,22 @@ namespace gr {
       static const uint16_t sVendorId;
       static const uint16_t sDeviceId;
       static const uint8_t sEndpoint;
+
       const size_t mBufferSize;
       USBContext mContext;
       USBDevice::Ptr mDevice; 
       USBRequest::Ptr mRequest;
 
+      std::mutex mMutex;
+      std::condition_variable mCondition;
+
+      std::list<USBBuffer::Ptr> mBufferList;
+
       void check(void);
       void configure(void);
       void printVersion(void);
 
-      void usbCallback(int status, const std::shared_ptr<const USBBuffer> &usbBuffer);
+      void usbCallback(int status, const USBBuffer::Ptr &usbBuffer);
 
      public:
       as_source_impl();

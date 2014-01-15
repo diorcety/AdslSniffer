@@ -89,7 +89,7 @@ void USBBuffer::__transfer_callback(struct libusb_transfer *transfer) {
 	buffer->transfer_callback(transfer);
 }
 
-USBBuffer::USBBuffer(size_t size, unsigned char *buffer): mBufferSize(size), mBuffer(buffer) {
+USBBuffer::USBBuffer(size_t size, unsigned char *buffer): mBufferSize(size), mOffset(0), mBuffer(buffer) {
 	if(size > 0) {
 		mTransfer = libusb_alloc_transfer(0);
 		if(mBuffer == NULL) {
@@ -99,13 +99,21 @@ USBBuffer::USBBuffer(size_t size, unsigned char *buffer): mBufferSize(size), mBu
 		mTransfer = NULL;
 		mBuffer = NULL;
 	}
-}
+} 
 
 USBBuffer::Ptr USBBuffer::steal() {
 	unsigned char *ptr = mBuffer;
 	mBuffer = new unsigned char[mBufferSize];
-	USBBuffer::Ptr newBuffer = std::make_shared<USBBuffer>(mBufferSize, ptr);
+	USBBuffer::Ptr newBuffer = std::make_shared<USBBuffer>(getActualLength(), ptr);
 	return newBuffer;
+}
+
+size_t USBBuffer::getOffset() const {
+	return mOffset;
+}
+
+void USBBuffer::setOffset(size_t offset) {
+	mOffset = offset;
 }
 
 void USBBuffer::fillBulkTransfer(USBDevice &device, std::function<void(const USBBuffer::Ptr &)> cb, unsigned char endpoint, size_t len, unsigned int timeout) {
