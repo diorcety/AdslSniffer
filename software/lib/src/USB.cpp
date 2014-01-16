@@ -90,13 +90,12 @@ void USBBuffer::__transfer_callback(struct libusb_transfer *transfer) {
 }
 
 USBBuffer::USBBuffer(size_t size, unsigned char *buffer): mBufferSize(size), mOffset(0), mBuffer(buffer) {
+	mTransfer = libusb_alloc_transfer(0);
 	if(size > 0) {
-		mTransfer = libusb_alloc_transfer(0);
 		if(mBuffer == NULL) {
 			mBuffer = new unsigned char[mBufferSize];
 		}
 	} else {
-		mTransfer = NULL;
 		mBuffer = NULL;
 	}
 } 
@@ -174,7 +173,9 @@ size_t USBBuffer::getActualLength() const {
 
 USBBuffer::~USBBuffer() {
 	libusb_free_transfer(mTransfer);
-	delete[] mBuffer;
+	if(mBuffer != NULL) {
+		delete[] mBuffer;
+	}
 }
 
 bool USBRequest::start() {

@@ -1,7 +1,7 @@
 <block>
   <name>AdslSniffer source</name>
   <key>adslsniffer_as_source</key>
-  <category>ADSLSNIFFER</category>
+  <category>AdslSniffer</category>
   <throttle>1</throttle>
   <import>import adslsniffer</import>
   <make>adslsniffer.as_source()</make>

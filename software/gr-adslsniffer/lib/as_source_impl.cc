@@ -54,10 +54,10 @@ namespace gr {
 	mRequest = std::make_shared<USBRequest>(8, mBufferSize);
 	mDevice = mContext.openDeviceWithVidPid(sVendorId, sDeviceId);
 	if(!mDevice) {
-		std::ios::fmtflags f(std::cout.flags());
+		std::ios::fmtflags f(std::cerr.flags());
 		std::cerr << std::hex << std::setw(4);
 		std::cerr << "Can't find device " << sVendorId << ":" << sDeviceId << std::endl; 
-		std::cout.flags(f);
+		std::cerr.flags(f);
 		return;
 	}	
 	configure();
@@ -87,7 +87,7 @@ namespace gr {
 	mDevice->setInterfaceAltSetting(0, 0);
     }
 
-    double as_source_impl::get_sample_rate(void) {
+    double as_source_impl::get_samp_rate(void) {
 	check();
 	USBBuffer buffer(4);
 	unsigned int ret = buffer.controlTransfer(*mDevice, LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE, 0x95, 0x0, 0x0, buffer.getBufferSize());
@@ -101,7 +101,7 @@ namespace gr {
 	}
     }
 
-    void as_source_impl::set_sample_rate(double rate) {
+    void as_source_impl::set_samp_rate(double rate) {
 	std::cerr << "Ignore set_sample_rate(" << rate << ")" << std::endl;
     }
 
@@ -124,9 +124,12 @@ namespace gr {
     bool as_source_impl::start(void) {
 	check();
 	std::cout << "AS Start" << std::endl;
+	mStatsTimePoint = std::chrono::steady_clock::now();
+	mStatsData = 0;
 	USBBuffer buffer(16);
 	buffer.controlTransfer(*mDevice, LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE, 0x92, 0x0, 0x0, 0);
 	mRequest->send(mDevice, sEndpoint, -1/*Infinite*/, std::bind(&as_source_impl::usbCallback, this, std::placeholders::_1, std::placeholders::_2));
+	return true;
     }
 
     bool as_source_impl::stop(void) {
@@ -136,6 +139,7 @@ namespace gr {
 	buffer.controlTransfer(*mDevice, LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE, 0x93, 0x0, 0x0, 0);
 	mRequest->stop();
 	mRequest->wait<>();
+	return true;
     }
 
     void as_source_impl::check(void) {
@@ -159,22 +163,23 @@ namespace gr {
 			  gr_vector_void_star &output_items)
     {
 	static const float mid = (float)(0x200);
-	static const float scale = (float)(0x1FF);
+	static const float scale = (float)(0x200);
         float *out = (float *) output_items[0];
 	int i = 0;
+
 	while(i < noutput_items) {
 		USBBuffer::Ptr buffer;	
 		{
 			std::unique_lock<std::mutex> lck(mMutex);
 			// Timeout ... in case
-			while(mBufferList.empty()) mCondition.wait_for(lck, std::chrono::seconds(1));
+			//while(mBufferList.empty()) mCondition.wait_for(lck, std::chrono::seconds(1));
 			if(!mBufferList.empty()) {
 				buffer = mBufferList.front();
 			}
 		}
 
 		if(buffer) {
-			if(buffer->getActualLength()%2) { 
+			if(buffer->getActualLength()%sizeof(unsigned short)) { 
 				std::cerr << "Mod(size, 2) != 0 !!!! Should not append" << std::endl;
 			}
 			int ninput_items = buffer->getBufferSize();
@@ -183,10 +188,13 @@ namespace gr {
 
 			while(i < noutput_items && j < ninput_items) {
 				*out = (((float) (0x3FF & *in)) - mid)/scale;
+				if(*out > 1.0f || *out < -1.0f) {
+					std::cerr << "Value " << *out << " is out of range [-1.0, 1.0]" << std::endl;
+				}
 				++in;
 				++out;
 				++i;
-				j+=2;		
+				j+=sizeof(unsigned short);		
 			}
 
 			buffer->setOffset(j);
@@ -195,6 +203,18 @@ namespace gr {
 				std::unique_lock<std::mutex> lck(mMutex);
 				mBufferList.pop_front();
 			}
+		}
+	}
+	
+	{
+		mStatsData += i;
+		std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+		std::chrono::duration<float> time_span = std::chrono::duration_cast<std::chrono::duration<float>>(now - mStatsTimePoint);
+		if(time_span.count() >= 2.0f) {
+			float rate = ((float) mStatsData * (2.0f / 1024.0f)) / time_span.count();
+			std::cout << "Bitrate " << rate << " kbits/s" << std::endl;
+			mStatsTimePoint = now;
+			mStatsData = 0;
 		}
 	}
 

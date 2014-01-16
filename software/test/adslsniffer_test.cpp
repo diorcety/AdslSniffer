@@ -44,7 +44,7 @@ int read_debug(libusb_device_handle *hndl, int wait = 1) {
 	return rv;
 }
 
-#define BENCH_DATA_SIZE (2*8832*1000) // 8832*1000 capture of 16 bits
+#define BENCH_DATA_SIZE (2*8832*1000*4) // 8832*1000 capture of 16 bits 4 seconds
 int nb_transfer = 0;
 #ifdef WIN32
 LARGE_INTEGER bench_base_time;
@@ -103,7 +103,23 @@ void bench_stats() {
 }
 
 void usb_cb(int status, const std::shared_ptr<const USBBuffer> &usbBuffer) {
-	return;
+	if(status == 0 && usbBuffer) {
+		int count = usbBuffer->getActualLength()/sizeof(unsigned short);
+		unsigned short *abcd = (unsigned short *)usbBuffer->getBuffer();
+		for(int i = 0 ; i < count; ++i) {
+			int part = i/128;
+			if(part%2==0 && *abcd != 0x0000) {
+				std::cerr << *abcd << " " << 0x0000 << std::endl;
+			} else if(part%2==1 && *abcd != 0xFFFF) {
+				std::cerr << *abcd << " " << 0xFFFF << std::endl;
+			}
+/*			if(*abcd != 0x2000) {
+				std::cerr << "x" << std::flush;
+			}
+*/
+			++abcd;
+		}
+	}
 }
 
 int main(int argc, char* argv[]) {

@@ -171,6 +171,7 @@ void init_waveform() {
 		} else {
 			*wdata = 0xFFFF;
 		}
+	//	*wdata = 0x2000;
 		++wdata;
 	}
 }
@@ -182,8 +183,6 @@ void main_init() {
 	SETIF48MHZ();
 	SYNCDELAY(); 
 
-	init_waveform();
-  
 	reset();
 
 	// set IFCONFIG
@@ -197,8 +196,14 @@ void main_init() {
 
 
 WORD timer = 0;
+WORD init = 0;
 
 void send() {
+	// Need to flusb the 4 buffers
+	if(init < 4) {
+		init_waveform();
+		init++;
+	}
 	// ARM ep2 in
 	EP2BCH = MSB(BUFF_SIZE);
 	SYNCDELAY();

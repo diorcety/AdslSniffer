@@ -26,6 +26,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <list>
+#include <chrono>
 
 namespace gr {
   namespace adslsniffer {
@@ -47,6 +48,9 @@ namespace gr {
 
       std::list<USBBuffer::Ptr> mBufferList;
 
+      std::chrono::steady_clock::time_point mStatsTimePoint;
+      size_t mStatsData;
+
       void check(void);
       void configure(void);
       void printVersion(void);
@@ -57,8 +61,8 @@ namespace gr {
       as_source_impl();
       ~as_source_impl();
 
-      void set_sample_rate(double rate);
-      double get_sample_rate(void);
+      void set_samp_rate(double rate);
+      double get_samp_rate(void);
 
       void flush(void);
       bool start(void);
