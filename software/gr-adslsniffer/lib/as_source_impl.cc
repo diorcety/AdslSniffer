@@ -172,7 +172,7 @@ namespace gr {
 		{
 			std::unique_lock<std::mutex> lck(mMutex);
 			// Timeout ... in case
-			//while(mBufferList.empty()) mCondition.wait_for(lck, std::chrono::seconds(1));
+			while(mBufferList.empty()) mCondition.wait_for(lck, std::chrono::seconds(1));
 			if(!mBufferList.empty()) {
 				buffer = mBufferList.front();
 			}
