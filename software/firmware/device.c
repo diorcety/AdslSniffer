@@ -25,6 +25,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "utils.h"
 #include "debug.h"
 
+#define SIMULATION
+#define SIG_EN (0x1 << 7)
+
 void reset();
 
 //************************** Configuration Handlers *****************************
@@ -71,16 +74,17 @@ BOOL handle_get_descriptor() {
 
 
 //******************* VENDOR COMMAND HANDLERS **************************
-__bit bench_start = 0;
-WORD count = 0;
+
 BOOL handle_vendorcommand(BYTE cmd) {
-	if(cmd == 0x90) {
+	if(cmd == 0x90) { // Reset
 		reset();
+		
+		// Nothing to reply
 		EP0BCH = 0;
 		EP0BCL = 0;
 		EP0CS |= bmHSNAK;
 		return TRUE;
-	} else if(cmd == 0x91) {
+	} else if(cmd == 0x91) { // Enable/Disable debug
 		short val = SETUP_VALUE();
 		if(val != 0) {
 			usb_debug_enable();
@@ -92,33 +96,45 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		EP0BCL = 0;
 		EP0CS |= bmHSNAK;
 		return TRUE;
-	} else if(cmd == 0x92) {
+	} else if(cmd == 0x92) { // Start stream
 		USB_DEBUG_PRINTF(6, "Start");
-		IOA &= ~(0x1 << 3); // Low 
-		count = 0;
-		bench_start = 1;
+		IOA &= ~SIG_EN; // Low
+		
+		// Nothing to reply
 		EP0BCH = 0;
 		EP0BCL = 0;
 		EP0CS |= bmHSNAK;
+		
+#ifdef SIMULATION
 		fx2_setup_timer0(29);
+#else
+		IFCONFIG |= bmIFFIFO;
+#endif
 		return TRUE;
-	} else if(cmd == 0x93) {
+	} else if(cmd == 0x93) { // Stop stream
 		USB_DEBUG_PRINTF(6, "Stop");
-		IOA |= (0x1 << 3); // High
-		bench_start = 0;
+		IOA |= SIG_EN; // High
+		
+		// Reset EP2
 		FIFORESET = bmNAKALL; SYNCDELAY();
-		FIFORESET = bmNAKALL | 2; SYNCDELAY();  // reset EP2
+		FIFORESET = bmNAKALL | 2; SYNCDELAY();
 		FIFORESET = 0x00; SYNCDELAY();
+		
+		// Nothing to reply
 		EP0BCH = 0;
 		EP0BCL = 0;
 		EP0CS |= bmHSNAK;
+#ifdef SIMULATION
 		fx2_setup_timer0(0);
+#else
+		IFCONFIG &= ~bmIFFIFO;
+#endif
 		return TRUE;
-	} else if(cmd == 0x94) {
+	} else if(cmd == 0x94) { // Get version
  		USB_PRINTF(0, "AdslSniffer V0.0.1");
 		EP0CS |= bmHSNAK;
  		return TRUE;
-	} else if(cmd == 0x95) {
+	} else if(cmd == 0x95) { // Get bitrate
 		WORD size = sizeof(DWORD);
 		DWORD *rate = (DWORD*)EP0BUF;
 		*rate = 8832000;
@@ -126,40 +142,89 @@ BOOL handle_vendorcommand(BYTE cmd) {
 		EP0BCL = LSB(size);
 		EP0CS |= bmHSNAK;
 		return TRUE;
-	} else if(cmd == 0x99) {
+	} else if(cmd == 0x99) { // Test debug EP
+		USB_DEBUG_PRINTF(6, "Test");
 		EP0BCH = 0;
 		EP0BCL = 0;
 		EP0CS |= bmHSNAK;
-		USB_DEBUG_PRINTF(6, "Test");
 		return TRUE;
 	}
 	return FALSE;
 }
 
 void reset() {
-	bench_start = 0;
-	count = 0;
 	EP2CS &= ~bmBIT0; SYNCDELAY();// remove stall bit
 	EP6CS &= ~bmBIT0; SYNCDELAY();// remove stall bit
  
 	// Reset all the FIFOs
 	FIFORESET = bmNAKALL; SYNCDELAY(); 
-	FIFORESET = 2; SYNCDELAY();   // reset EP2
-	FIFORESET = 6; SYNCDELAY();   // reset EP6
+	FIFORESET = bmNAKALL | 2; SYNCDELAY();   // reset EP2
+	FIFORESET = bmNAKALL | 6; SYNCDELAY();   // reset EP6
 	FIFORESET = 0x00; SYNCDELAY(); 
  
 	EP2FIFOCFG &= ~bmBIT0; SYNCDELAY();// not worldwide
 	EP6FIFOCFG &= ~bmBIT0; SYNCDELAY();// not worldwide
 	
-	IOA |= (0x1 << 3); // High at start
-	OEA |= (0x1 << 3); // OEA 3 Output
+	IOA |= SIG_EN; // High at start
+	OEA |= SIG_EN; // OEA 3 Output
 
 	DISABLE_TIMER0();
  
 	usb_debug_disable();
 }
 
+// PKTEND(PA6) = 0
+// SLOE = x // Don't care in IN mode
+// FIFOADR0(PA4) = 0 // EP2
+// FIFOADR1(PA5)  = 0 // EP2
+// CLK(RDY1) = CLK
+// PA7 = EN
+
 //********************  INIT ***********************
+
+void configure_fifo() {
+	FIFOINPOLAR = 0xFF; SYNCDELAY(); // Enable on high level
+	PINFLAGSAB = 0x00; SYNCDELAY(); // Don't care
+	PINFLAGSCD = 0x00; SYNCDELAY(); // Don't care
+	
+	IFCONFIG = bmIFCLKSRC | bmASYNC; SYNCDELAY(); // External clock source, async
+	
+	EP2AUTOINLENH = 0x02; SYNCDELAY();// EZ-USB automatically commits data in 512-byte chunks
+	EP2AUTOINLENL = 0x00; SYNCDELAY();
+	
+	EP2FIFOCFG = bmAUTOIN | bmWORDWIDE; SYNCDELAY();
+}
+
+void main_init() {
+	REVCTL = 0x03;
+	SYNCDELAY();
+	SETIF48MHZ();
+	SYNCDELAY(); 
+
+	// Configure port
+	PORTACFG = 0x00; SYNCDELAY(); 
+	PORTBCFG = 0x00; SYNCDELAY(); 
+	PORTCCFG = 0x00; SYNCDELAY(); 
+	PORTDCFG = 0x00; SYNCDELAY(); 
+
+	// set IFCONFIG
+	EP1INCFG &= ~bmVALID; SYNCDELAY(); 
+	EP1OUTCFG &= ~bmVALID; SYNCDELAY(); 
+	EP2CFG = (bmVALID | bmBULK | bmBUF4X /*| bmBUF1024*/ | bmDIR); SYNCDELAY();
+	EP4CFG &= ~bmVALID; /* = (bmVALID | bmISO | bmBUF2X | bmDIR);*/ SYNCDELAY(); 
+	EP6CFG = (bmVALID | bmBULK | bmBUF2X | bmDIR); SYNCDELAY(); 
+	EP8CFG &= ~bmVALID;  SYNCDELAY();
+	
+	reset();
+	
+#ifndef SIMULATION
+	configure_fifo();
+#endif
+}
+
+#if SIMULATION
+WORD init = 0;
+
 #define BUFF_SIZE (512)
 
 void init_waveform() {
@@ -176,28 +241,6 @@ void init_waveform() {
 	}
 }
 
-void main_init() {
-	REVCTL = 0x03;
-	SYNCDELAY(); 
-	PORTACFG = 0x00;
-	SETIF48MHZ();
-	SYNCDELAY(); 
-
-	reset();
-
-	// set IFCONFIG
-	EP1INCFG &= ~bmVALID; SYNCDELAY(); 
-	EP1OUTCFG &= ~bmVALID;
-	EP2CFG = (bmVALID | bmBULK | bmBUF4X /*| bmBUF1024*/ | bmDIR); SYNCDELAY();
-	EP4CFG &= ~bmVALID; /* = (bmVALID | bmISO | bmBUF2X | bmDIR);*/ SYNCDELAY(); 
-	EP6CFG = (bmVALID | bmBULK | bmBUF2X | bmDIR); SYNCDELAY(); 
-	EP8CFG &= ~bmVALID;  SYNCDELAY();
-}
-
-
-WORD timer = 0;
-WORD init = 0;
-
 void send() {
 	// Need to flusb the 4 buffers
 	if(init < 4) {
@@ -205,29 +248,18 @@ void send() {
 		init++;
 	}
 	// ARM ep2 in
-	EP2BCH = MSB(BUFF_SIZE);
-	SYNCDELAY();
-	EP2BCL = LSB(BUFF_SIZE);
-	SYNCDELAY();
-	++count;
-	
+	EP2BCH = MSB(BUFF_SIZE); SYNCDELAY();
+	EP2BCL = LSB(BUFF_SIZE); SYNCDELAY();
 }
-void main_loop() {
-	if(bench_start) {
-#if 0
-		while((EP2468STAT & bmEP2FULL) == 0) {
-			send();
-		}
 #endif
-	}
-	
-}
 
 void timer0_callback() {
-	++timer;
-#if 1
+#if SIMULATION
 	if((EP2468STAT & bmEP2FULL) == 0) {
 		send();
 	}
 #endif
+}
+
+void main_loop() {
 }
