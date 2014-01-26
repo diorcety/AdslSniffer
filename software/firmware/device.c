@@ -183,7 +183,7 @@ void reset() {
 //********************  INIT ***********************
 
 void configure_fifo() {
-	FIFOINPOLAR = 0xFF; SYNCDELAY(); // Enable on high level
+	FIFOPINPOLAR = 0xFF; SYNCDELAY(); // Enable on high level
 	PINFLAGSAB = 0x00; SYNCDELAY(); // Don't care
 	PINFLAGSCD = 0x00; SYNCDELAY(); // Don't care
 	
@@ -203,9 +203,8 @@ void main_init() {
 
 	// Configure port
 	PORTACFG = 0x00; SYNCDELAY(); 
-	PORTBCFG = 0x00; SYNCDELAY(); 
 	PORTCCFG = 0x00; SYNCDELAY(); 
-	PORTDCFG = 0x00; SYNCDELAY(); 
+	PORTECFG = 0x00; SYNCDELAY(); 
 
 	// set IFCONFIG
 	EP1INCFG &= ~bmVALID; SYNCDELAY(); 
@@ -222,7 +221,7 @@ void main_init() {
 #endif
 }
 
-#if SIMULATION
+#ifdef SIMULATION
 WORD init = 0;
 
 #define BUFF_SIZE (512)
@@ -254,7 +253,7 @@ void send() {
 #endif
 
 void timer0_callback() {
-#if SIMULATION
+#ifdef SIMULATION
 	if((EP2468STAT & bmEP2FULL) == 0) {
 		send();
 	}
