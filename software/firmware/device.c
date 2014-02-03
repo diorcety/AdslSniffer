@@ -174,11 +174,13 @@ void reset() {
 }
 
 // PKTEND(PA6) = 0
-// SLOE = x // Don't care in IN mode
+// SLOE(PA2) = x // Don't care in IN mode
 // FIFOADR0(PA4) = 0 // EP2
 // FIFOADR1(PA5)  = 0 // EP2
 // CLK(RDY1) = CLK
 // PA7 = EN
+// PB0-7 = D0-7
+// PD0-7 = D8-15
 
 //********************  INIT ***********************
 
