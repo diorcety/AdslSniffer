@@ -24,10 +24,14 @@ USBException::USBException(int code, std::string &&where): mCode(code), mWhere(w
 	if(!mWhere.empty()) {
 		mWhat += mWhere + ":";
 	}
+#ifdef LIBUSB_ERROR_COUNT
 	mWhat += "(";
 	mWhat += libusb_error_name(code);
 	mWhat += ") ";
 	mWhat += libusb_strerror((enum libusb_error)code);
+#else
+	mWhat += libusb_error_name(code);
+#endif
 }
 
 int USBException::code() const {

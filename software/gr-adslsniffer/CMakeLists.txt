@@ -84,6 +84,7 @@ set(GRC_BLOCKS_DIR      ${GR_PKG_DATA_DIR}/grc/blocks)
 # Find gnuradio build dependencies
 ########################################################################
 find_package(CppUnit)
+find_package(Log4CPP)
 find_package(USB1)
 
 # Search for GNU Radio and its components and versions. Add any
