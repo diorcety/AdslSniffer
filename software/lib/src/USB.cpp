@@ -1,4 +1,4 @@
-/* 
+/*
 AdslSniffer
 Copyright (C) 2013  Yann Diorcet <diorcet.yann@gmail.com>
 
@@ -102,7 +102,7 @@ USBBuffer::USBBuffer(size_t size, unsigned char *buffer): mBufferSize(size), mOf
 	} else {
 		mBuffer = NULL;
 	}
-} 
+}
 
 USBBuffer::Ptr USBBuffer::steal() {
 	unsigned char *ptr = mBuffer;
@@ -195,14 +195,14 @@ USBRequest::USBRequest(size_t packet_count, size_t buffer_size, int timeout): mT
 void USBRequest::receive(const USBBuffer::Ptr &buffer) {
 	std::unique_lock<std::recursive_mutex> lock(*this);
 	int status = buffer->getStatus();
-	
+
 	// Reset buffer
 	processing_buffers.remove(buffer);
 	if(mCallback) {
 		mCallback(status, buffer);
 	}
 	idle_buffers.push_back(buffer);
-	
+
 	mBytes -= buffer->getBufferSize();
 	if(status == LIBUSB_TRANSFER_COMPLETED) {
 		//std::cerr << "Received " << buffer->getActualLength() << std::endl;
@@ -232,7 +232,7 @@ void USBRequest::handleBuffers() {
 			mError = ex.code();
 		}
 	}
-	
+
 	if((mRequestedBytes >=0 && (mRequestedBytes - mBytes) == 0) || mError != 0 || isCompleted()) {
 		if(processing_buffers.empty()) {
 			std::cerr << "Request end: (remaining ";

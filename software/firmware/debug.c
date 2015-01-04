@@ -1,4 +1,4 @@
-/* 
+/*
 AdslSniffer
 Copyright (C) 2013  Yann Diorcet <diorcet.yann@gmail.com>
 
@@ -60,7 +60,7 @@ int __usb_printf_##port(const char *format, ...) {	\
 		EPxBCL(port)=LSB(len);			\
 	}						\
 	return ret;					\
-}							
+}
 
 #define DEFINE_USB_PRINTF(port)				\
 int __usb_printf_##port(const char *format, ...) {	\
@@ -99,7 +99,7 @@ int __usb_printf_##port(const char *format, ...) {	\
 		EPxBCL(port)=LSB(len);			\
 	}						\
 	return ret;					\
-}							
+}
 
 DEFINE_USB_PRINTF_S(0)
 DEFINE_USB_PRINTF(2)

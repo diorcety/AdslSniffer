@@ -1,4 +1,4 @@
-/* 
+/*
 AdslSniffer
 Copyright (C) 2013  Yann Diorcet <diorcet.yann@gmail.com>
 
@@ -47,7 +47,7 @@ BOOL handle_get_interface(BYTE ifc, BYTE* alt_ifc) {
 // return TRUE if you set the interface requested
 // NOTE this function should reconfigure and reset the endpoints
 // according to the interface descriptors you provided.
-BOOL handle_set_interface(BYTE ifc, BYTE alt_ifc) {  
+BOOL handle_set_interface(BYTE ifc, BYTE alt_ifc) {
 	interface = ifc;
 	alt = alt_ifc;
 	return TRUE;
@@ -58,12 +58,12 @@ BOOL handle_set_interface(BYTE ifc, BYTE alt_ifc) {
 // keep track of the config number and return the correct number
 // config numbers are set int the dscr file.
 volatile BYTE config = 1;
-BYTE handle_get_configuration() { 
+BYTE handle_get_configuration() {
 	return 1;
 }
 
 // NOTE changing config requires the device to reset all the endpoints
-BOOL handle_set_configuration(BYTE cfg) { 
+BOOL handle_set_configuration(BYTE cfg) {
 	config = cfg;
 	return TRUE;
 }
@@ -78,7 +78,7 @@ BOOL handle_get_descriptor() {
 BOOL handle_vendorcommand(BYTE cmd) {
 	if(cmd == 0x90) { // Reset
 		reset();
-		
+
 		// Nothing to reply
 		EP0BCH = 0;
 		EP0BCL = 0;
@@ -99,12 +99,12 @@ BOOL handle_vendorcommand(BYTE cmd) {
 	} else if(cmd == 0x92) { // Start stream
 		USB_DEBUG_PRINTF(6, "Start");
 		IOA &= ~SIG_EN; // Low
-		
+
 		// Nothing to reply
 		EP0BCH = 0;
 		EP0BCL = 0;
 		EP0CS |= bmHSNAK;
-		
+
 #ifdef SIMULATION
 		fx2_setup_timer0(29);
 #else
@@ -114,12 +114,12 @@ BOOL handle_vendorcommand(BYTE cmd) {
 	} else if(cmd == 0x93) { // Stop stream
 		USB_DEBUG_PRINTF(6, "Stop");
 		IOA |= SIG_EN; // High
-		
+
 		// Reset EP2
 		FIFORESET = bmNAKALL; SYNCDELAY();
 		FIFORESET = bmNAKALL | 2; SYNCDELAY();
 		FIFORESET = 0x00; SYNCDELAY();
-		
+
 		// Nothing to reply
 		EP0BCH = 0;
 		EP0BCL = 0;
@@ -131,9 +131,9 @@ BOOL handle_vendorcommand(BYTE cmd) {
 #endif
 		return TRUE;
 	} else if(cmd == 0x94) { // Get version
- 		USB_PRINTF(0, "AdslSniffer V0.0.1");
+		USB_PRINTF(0, "AdslSniffer V0.0.1");
 		EP0CS |= bmHSNAK;
- 		return TRUE;
+		return TRUE;
 	} else if(cmd == 0x95) { // Get bitrate
 		WORD size = sizeof(DWORD);
 		DWORD *rate = (DWORD*)EP0BUF;
@@ -155,21 +155,21 @@ BOOL handle_vendorcommand(BYTE cmd) {
 void reset() {
 	EP2CS &= ~bmBIT0; SYNCDELAY();// remove stall bit
 	EP6CS &= ~bmBIT0; SYNCDELAY();// remove stall bit
- 
+
 	// Reset all the FIFOs
-	FIFORESET = bmNAKALL; SYNCDELAY(); 
+	FIFORESET = bmNAKALL; SYNCDELAY();
 	FIFORESET = bmNAKALL | 2; SYNCDELAY();   // reset EP2
 	FIFORESET = bmNAKALL | 6; SYNCDELAY();   // reset EP6
-	FIFORESET = 0x00; SYNCDELAY(); 
- 
+	FIFORESET = 0x00; SYNCDELAY();
+
 	EP2FIFOCFG &= ~bmBIT0; SYNCDELAY();// not worldwide
 	EP6FIFOCFG &= ~bmBIT0; SYNCDELAY();// not worldwide
-	
+
 	IOA |= SIG_EN; // High at start
 	OEA |= SIG_EN; // OEA 3 Output
 
 	DISABLE_TIMER0();
- 
+
 	usb_debug_disable();
 }
 
@@ -188,12 +188,12 @@ void configure_fifo() {
 	FIFOPINPOLAR = 0xFF; SYNCDELAY(); // Enable on high level
 	PINFLAGSAB = 0x00; SYNCDELAY(); // Don't care
 	PINFLAGSCD = 0x00; SYNCDELAY(); // Don't care
-	
+
 	IFCONFIG = bmIFCLKSRC | bmASYNC; SYNCDELAY(); // External clock source, async
-	
+
 	EP2AUTOINLENH = 0x02; SYNCDELAY();// EZ-USB automatically commits data in 512-byte chunks
 	EP2AUTOINLENL = 0x00; SYNCDELAY();
-	
+
 	EP2FIFOCFG = bmAUTOIN | bmWORDWIDE; SYNCDELAY();
 }
 
@@ -201,23 +201,23 @@ void main_init() {
 	REVCTL = 0x03;
 	SYNCDELAY();
 	SETIF48MHZ();
-	SYNCDELAY(); 
+	SYNCDELAY();
 
 	// Configure port
-	PORTACFG = 0x00; SYNCDELAY(); 
-	PORTCCFG = 0x00; SYNCDELAY(); 
-	PORTECFG = 0x00; SYNCDELAY(); 
+	PORTACFG = 0x00; SYNCDELAY();
+	PORTCCFG = 0x00; SYNCDELAY();
+	PORTECFG = 0x00; SYNCDELAY();
 
 	// set IFCONFIG
-	EP1INCFG &= ~bmVALID; SYNCDELAY(); 
-	EP1OUTCFG &= ~bmVALID; SYNCDELAY(); 
+	EP1INCFG &= ~bmVALID; SYNCDELAY();
+	EP1OUTCFG &= ~bmVALID; SYNCDELAY();
 	EP2CFG = (bmVALID | bmBULK | bmBUF4X /*| bmBUF1024*/ | bmDIR); SYNCDELAY();
-	EP4CFG &= ~bmVALID; /* = (bmVALID | bmISO | bmBUF2X | bmDIR);*/ SYNCDELAY(); 
-	EP6CFG = (bmVALID | bmBULK | bmBUF2X | bmDIR); SYNCDELAY(); 
+	EP4CFG &= ~bmVALID; /* = (bmVALID | bmISO | bmBUF2X | bmDIR);*/ SYNCDELAY();
+	EP6CFG = (bmVALID | bmBULK | bmBUF2X | bmDIR); SYNCDELAY();
 	EP8CFG &= ~bmVALID;  SYNCDELAY();
-	
+
 	reset();
-	
+
 #ifndef SIMULATION
 	configure_fifo();
 #endif

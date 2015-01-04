@@ -1,4 +1,4 @@
-/* 
+/*
 AdslSniffer
 Copyright (C) 2013  Yann Diorcet <diorcet.yann@gmail.com>
 
@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifdef WIN32
 #include <windows.h>
 void usleep(int s) {
-  Sleep(s/1000);
+	Sleep(s/1000);
 }
 #endif
 #include "USB.h"
@@ -35,7 +35,7 @@ int read_debug(libusb_device_handle *hndl, int wait = 1) {
 	int rv;
 	int transferred;
 	unsigned char buf[64];
-	rv = libusb_bulk_transfer(hndl, 0x86, (unsigned char*)buf, sizeof(buf), &transferred, wait); 
+	rv = libusb_bulk_transfer(hndl, 0x86, (unsigned char*)buf, sizeof(buf), &transferred, wait);
 	if (rv == 0 && transferred > 0) {
 		std::cout << ">>>>> " << buf << " <<<<<" << std::endl;
 	} else if(rv != LIBUSB_ERROR_TIMEOUT) {
@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) {
 #ifndef WIN32
 	if(device->isKernelDriverActive(0)) device->detachKernelDriver(0);
 #endif
-	
+
 	device->setConfiguration(1);
 	device->claimInterface(0);
 	device->setInterfaceAltSetting(0, 0);
@@ -141,10 +141,10 @@ int main(int argc, char* argv[]) {
 	libusb_device_handle *hndl = device->getDeviceHandle();
 
 	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
- 
- 	printf("AdslSniffer Test\n"); 
-	printf("RESET\n"); 
-	rv = libusb_control_transfer(hndl, 
+
+	printf("AdslSniffer Test\n");
+	printf("RESET\n");
+	rv = libusb_control_transfer(hndl,
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
 		0x90,
 		0x11,
@@ -165,7 +165,7 @@ int main(int argc, char* argv[]) {
 	} else {
 		std::cerr << "Error during version grabbing" << std::endl;
 	}
-	
+
 	ret = buffer.controlTransfer(*device, LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE, 0x95, 0x11, 0x22, buffer.getBufferSize()-1);
 	if(ret == 4) {
 		unsigned int *rate = (unsigned int *)buffer.getBuffer();
@@ -173,9 +173,9 @@ int main(int argc, char* argv[]) {
 	} else {
 		std::cerr << "Error during sample rate grabbing" << std::endl;
 	}
- 
+
 	printf("Enable debug\n");
-	rv = libusb_control_transfer(hndl, 
+	rv = libusb_control_transfer(hndl,
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
 		0x91,
 		0x01,
@@ -190,9 +190,9 @@ int main(int argc, char* argv[]) {
 
 	read_debug(hndl, 1000);
 	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
-	
+
 	printf("Print test\n");
-	rv = libusb_control_transfer(hndl, 
+	rv = libusb_control_transfer(hndl,
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
 		0x99,
 		0x00,
@@ -207,10 +207,10 @@ int main(int argc, char* argv[]) {
 
 	read_debug(hndl, 1000);
 	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
-	
-	
+
+
 	printf("Start Test\n");
-	rv = libusb_control_transfer(hndl, 
+	rv = libusb_control_transfer(hndl,
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
 		0x92,
 		0xffff,
@@ -224,11 +224,11 @@ int main(int argc, char* argv[]) {
 	}
 	read_debug(hndl, 0);
 	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
-	
+
 	USBRequest request(8, 2048);
-	
+
 	context.start<>();
-	
+
 	// Send request
 	bench_start();
 	request.send(device, 0x82, BENCH_DATA_SIZE, usb_cb);
@@ -238,9 +238,9 @@ int main(int argc, char* argv[]) {
 
 	context.stop();
 	context.wait();
-	
+
 	printf("Stop Test\n");
-	rv = libusb_control_transfer(hndl, 
+	rv = libusb_control_transfer(hndl,
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
 		0x93,
 		0xffff,
@@ -254,9 +254,9 @@ int main(int argc, char* argv[]) {
 	}
 	read_debug(hndl, 0);
 	while(read_debug(hndl) != LIBUSB_ERROR_TIMEOUT);
-	
+
 	printf("Print test\n");
-	rv = libusb_control_transfer(hndl, 
+	rv = libusb_control_transfer(hndl,
 		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
 		0x99,
 		0x00,
@@ -277,7 +277,7 @@ int main(int argc, char* argv[]) {
 	// Close device
 	device->releaseInterface(0);
 	device.reset();
-	
+
 	printf("Test end\n");
 	bench_stats();
 

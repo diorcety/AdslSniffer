@@ -1,4 +1,4 @@
-/* 
+/*
 AdslSniffer
 Copyright (C) 2013  Yann Diorcet <diorcet.yann@gmail.com>
 
@@ -35,16 +35,16 @@ extern void main_loop();
 extern void main_init();
 
 void main() {
-	SETCPUFREQ(CLK_48M); // required for sio0_init 
+	SETCPUFREQ(CLK_48M); // required for sio0_init
 
 	main_init();
 
 	// set up interrupts.
 	USE_USB_INTS();
- 
+
 	ENABLE_SUDAV();
 	ENABLE_USBRESET();
-	ENABLE_HISPEED(); 
+	ENABLE_HISPEED();
 	ENABLE_SUSPEND();
 	ENABLE_RESUME();
 
@@ -57,7 +57,7 @@ void main() {
 #else
 	USBCS &= ~bmDISCON;
 #endif
- 
+
 	while(TRUE) {
 		main_loop();
 
@@ -82,7 +82,7 @@ void main() {
 				nop
 				nop
 				__endasm;
-			} while ( !remote_wakeup_allowed && REMOTE_WAKEUP()); 
+			} while ( !remote_wakeup_allowed && REMOTE_WAKEUP());
 			printf ( "I'm going to wake up.\n");
 
 			// resume
@@ -103,7 +103,7 @@ void main() {
 void resume_isr() __interrupt RESUME_ISR {
 	CLEAR_RESUME();
 }
-  
+
 void sudav_isr() __interrupt SUDAV_ISR {
 	dosud=TRUE;
 	CLEAR_SUDAV();

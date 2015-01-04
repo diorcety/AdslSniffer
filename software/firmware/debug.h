@@ -1,4 +1,4 @@
-/* 
+/*
 AdslSniffer
 Copyright (C) 2013  Yann Diorcet <diorcet.yann@gmail.com>
 
@@ -25,7 +25,7 @@ __bit usb_debug_enabled();
 void usb_debug_disable();
 
 #define DECLARE_USB_PRINTF(port) 		\
-int __usb_printf_##port(const char *format, ...)	
+int __usb_printf_##port(const char *format, ...)
 
 
 DECLARE_USB_PRINTF(0);
@@ -41,12 +41,12 @@ __usb_printf_##port(format, ## __VA_ARGS__)				\
 if(usb_debug_enabled())__usb_printf_##port(format, ## __VA_ARGS__)	\
 
 
-#ifdef DEBUG_FIRMWARE  
-#include <serial.h> 
-#include <stdio.h> 
-#else 
+#ifdef DEBUG_FIRMWARE
+#include <serial.h>
 #include <stdio.h>
-#define printf(...) 
+#else
+#include <stdio.h>
+#define printf(...)
 #endif
 
 #endif //DEBUG__
