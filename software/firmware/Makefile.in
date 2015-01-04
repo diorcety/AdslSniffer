@@ -7,4 +7,7 @@ SDCCLIB=@SDCCLIB@
 
 all: ihx
 
+deploy: ihx
+	cycfx2prog -id=04b4.8613 prg:build/$(BASENAME).ihx run
+
 include ../../fx2lib/lib/fx2.mk
