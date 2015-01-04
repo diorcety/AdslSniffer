@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 class USBException: public std::exception {
 private:
 	int mCode;
-	std::string mWhat;	
+	std::string mWhat;
 	std::string mWhere;
 
 public:
@@ -46,8 +46,8 @@ public:
 
 class USBAsync: protected std::recursive_mutex {
 private:
-    std::condition_variable mCond;
-    std::mutex mMutex;
+	std::condition_variable mCond;
+	std::mutex mMutex;
 	int mCompleted;
 	bool mStarted;
 	
@@ -68,6 +68,14 @@ public:
 		std::unique_lock<std::mutex> lock(mMutex);
 		if(mStarted) {
 			mCond.wait_for(lock, duration);
+			return true;
+		}
+		return false;
+	}
+	bool wait() {
+		std::unique_lock<std::mutex> lock(mMutex);
+		if(mStarted) {
+			mCond.wait(lock);
 			return true;
 		}
 		return false;
@@ -160,10 +168,10 @@ public:
 	libusb_device_handle* getDeviceHandle() const;
 
 	int getConfiguration() const;
-        void setConfiguration(int configuration);
+	void setConfiguration(int configuration);
 
 	void setInterfaceAltSetting(int interface, int setting);
-        void claimInterface(int interface);
+	void claimInterface(int interface);
 	void releaseInterface(int interface);
 
 	bool isKernelDriverActive(int interface) const;
@@ -214,7 +222,7 @@ public:
 		}
 		return ret;
 	}
-        
+
 	void setDebug(int level);
 	USBDevice::Ptr openDeviceWithVidPid(uint16_t vendor_id, uint16_t product_id) const;
 };

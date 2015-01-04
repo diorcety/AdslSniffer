@@ -233,11 +233,11 @@ int main(int argc, char* argv[]) {
 	bench_start();
 	request.send(device, 0x82, BENCH_DATA_SIZE, usb_cb);
 	bench_inc();
-	request.wait<>();
+	request.wait();
 	bench_stop();
 
 	context.stop();
-	context.wait<>();
+	context.wait();
 	
 	printf("Stop Test\n");
 	rv = libusb_control_transfer(hndl, 
