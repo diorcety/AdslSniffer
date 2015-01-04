@@ -2,12 +2,12 @@ bin_PROGRAMS = adslsniffer_test
 
 adslsniffer_test_CPPFLAGS = \
 	-I$(top_srcdir)/lib/include \
-	$(libusb_CFLAGS) \
-	-Wall -Werror
+	$(libusb_CFLAGS)
 
 adslsniffer_test_SOURCES = \
 	adslsniffer_test.cpp
 
 adslsniffer_test_LDADD = \
 	$(top_builddir)/lib/libAdslSniffer.la \
-	$(libusb_LIBS)
+	$(libusb_LIBS) \
+	-lpthread

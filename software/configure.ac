@@ -6,11 +6,14 @@ AC_INIT([AdslSniffer], [0.1], [diorcet.yann@gmail.com])
 AM_INIT_AUTOMAKE
 LT_INIT
 
+CPPFLAGS="-fPIC"
 # Checks for programs.
 AC_PROG_CC
+CFLAGS=""
 
 AC_LANG([C++])
 AC_PROG_CXX
+CXXFLAGS=""
 AX_CXX_COMPILE_STDCXX_11
 
 AC_CHECK_PROGS(SDCC,[sdcc sdcc-sdcc],no)
@@ -34,6 +37,27 @@ AC_SUBST([SDCCLIB])
 # Checks for libraries.
 PKG_CHECK_MODULES([libusb], [libusb-1.0])
 
+# Configuration
+dnl ---------------------------------------------------------------------------
+dnl - Enable strict warnings (-Werror) (disabled by default)
+dnl ---------------------------------------------------------------------------
+AC_ARG_ENABLE([strict],
+	[AS_HELP_STRING([--disable-strict], [Disable strict compilation warnings])],
+	[],
+	[enable_strict=yes]
+)
+AS_IF([test "x$enable_strict" = "xyes"],
+	[CPPFLAGS="$CPPFLAGS -Wall -Werror"]
+)
+
+AC_ARG_ENABLE([debug],
+	[AS_HELP_STRING([--enable-debug], [Enable debug compilation])],
+	[],
+	[])
+AS_IF([test "x$enable_debug" = "xyes"],
+	[CPPFLAGS="$CPPFLAGS -O0 -g -ggdb"],
+	[CPPFLAGS="-O2"]
+)
 
 # Checks for header files.
 
